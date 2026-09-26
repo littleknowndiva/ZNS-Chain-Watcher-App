@@ -1,0 +1,2585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>THE ZOO - NIGHT SHIFT | Chain Watcher</title>
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  html, body { background: #05060b; margin: 0; }
+  * { box-sizing: border-box; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+
+
+
+const { useState, useEffect, useMemo, useRef } = React;
+
+/* Minimal inline stroke-icon set (replaces lucide-react for a self-contained published page) */
+const iconBase = { viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", strokeLinecap: "round", strokeLinejoin: "round" };
+const Clock = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><polyline points="12,7 12,12 16,13.5" /></svg>);
+const Shield = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><path d="M12 2 L20 5 V11 C20 16 16 20 12 22 C8 20 4 16 4 11 V5 Z" /></svg>);
+const Award = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="8" r="5.5" /><path d="M8.3 13 L6.5 21 L12 18 L17.5 21 L15.7 13" /></svg>);
+const Eye = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><path d="M2 12 C4 6 8 4 12 4 C16 4 20 6 22 12 C20 18 16 20 12 20 C8 20 4 18 2 12 Z" /><circle cx="12" cy="12" r="3" /></svg>);
+const Settings = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="3" /><path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" /></svg>);
+const CheckCircle = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><polyline points="8,12.5 11,15.5 16,9.5" /></svg>);
+const XCircle = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><line x1="9" y1="9" x2="15" y2="15" /><line x1="15" y1="9" x2="9" y2="15" /></svg>);
+const Globe = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><line x1="3" y1="12" x2="21" y2="12" /></svg>);
+const Calendar = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><rect x="3" y="4.5" width="18" height="16" rx="2" /><line x1="16" y1="2" x2="16" y2="6.5" /><line x1="8" y1="2" x2="8" y2="6.5" /><line x1="3" y1="10" x2="21" y2="10" /></svg>);
+const CalendarPlus = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><rect x="3" y="4.5" width="18" height="16" rx="2" /><line x1="8" y1="2" x2="8" y2="6.5" /><line x1="16" y1="2" x2="16" y2="6.5" /><line x1="3" y1="10" x2="21" y2="10" /><line x1="12" y1="14" x2="12" y2="19" /><line x1="9.5" y1="16.5" x2="14.5" y2="16.5" /></svg>);
+const BarChart3 = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><line x1="5" y1="20" x2="5" y2="11" /><line x1="12" y1="20" x2="12" y2="4" /><line x1="19" y1="20" x2="19" y2="14" /><line x1="2.5" y1="20.5" x2="21.5" y2="20.5" /></svg>);
+const AlertCircle = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><line x1="12" y1="7.5" x2="12" y2="13" /><circle cx="12" cy="16.5" r="0.6" fill="currentColor" stroke="none" /></svg>);
+const AlertTriangle = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><path d="M12 2.5 L22.5 21 H1.5 Z" /><line x1="12" y1="9.5" x2="12" y2="14.5" /><circle cx="12" cy="17.5" r="0.6" fill="currentColor" stroke="none" /></svg>);
+const Lock = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><rect x="4" y="11" width="16" height="10" rx="2" /><path d="M7.5 11V7.5a4.5 4.5 0 0 1 9 0V11" /></svg>);
+const Crosshair = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="8" /><line x1="12" y1="1" x2="12" y2="5" /><line x1="12" y1="19" x2="12" y2="23" /><line x1="1" y1="12" x2="5" y2="12" /><line x1="19" y1="12" x2="23" y2="12" /></svg>);
+const Target = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><circle cx="12" cy="12" r="5.5" /><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none" /></svg>);
+const Key = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="7.5" cy="15.5" r="4.5" /><line x1="10.8" y1="12.2" x2="21" y2="2" /><line x1="16.5" y1="6.5" x2="19.5" y2="9.5" /><line x1="19" y1="4" x2="22" y2="7" /></svg>);
+const Zap = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className} fill="currentColor" stroke="none"><polygon points="13,2 3,14 12,14 11,22 21,10 12,10" /></svg>);
+const Info = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="12" cy="12" r="9" /><line x1="12" y1="10.5" x2="12" y2="16.5" /><circle cx="12" cy="7.5" r="0.6" fill="currentColor" stroke="none" /></svg>);
+const Search = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><circle cx="11" cy="11" r="7" /><line x1="21" y1="21" x2="16.2" y2="16.2" /></svg>);
+const Download = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><line x1="12" y1="3" x2="12" y2="14.5" /><polyline points="7,10 12,15 17,10" /><line x1="4" y1="20" x2="20" y2="20" /></svg>);
+const Upload = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><line x1="12" y1="20.5" x2="12" y2="9" /><polyline points="7,14 12,9 17,14" /><line x1="4" y1="20" x2="20" y2="20" /></svg>);
+const Timer = ({ className = "w-4 h-4" }) => (<svg {...iconBase} className={className}><line x1="10" y1="2" x2="14" y2="2" /><line x1="12" y1="2" x2="12" y2="5" /><circle cx="12" cy="14" r="8" /><line x1="12" y1="14" x2="15" y2="11" /></svg>);
+
+/* Custom SVG Neon Animals for Header & Badges */
+const NeonOwlIcon = ({ className = "w-10 h-10" }) => (
+  <svg viewBox="0 0 100 80" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M50 25 C40 10 15 15 5 35 C15 40 30 35 42 42 C30 55 20 60 10 65 C30 70 45 55 50 48 C55 55 70 70 90 65 C80 60 70 55 58 42 C70 35 85 40 95 35 C85 15 60 10 50 25 Z" 
+      stroke="#00f0ff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" 
+      style={{ filter: 'drop-shadow(0px 0px 6px #00f0ff)' }} />
+    <circle cx="40" cy="30" r="5" stroke="#00f0ff" strokeWidth="2" style={{ filter: 'drop-shadow(0px 0px 4px #00f0ff)' }} />
+    <circle cx="60" cy="30" r="5" stroke="#00f0ff" strokeWidth="2" style={{ filter: 'drop-shadow(0px 0px 4px #00f0ff)' }} />
+    <path d="M48 35 L50 39 L52 35" stroke="#ffd700" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
+
+const NeonTigerIcon = ({ className = "w-8 h-8" }) => (
+  <svg viewBox="0 0 80 60" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M10 45 C15 25 35 20 50 25 C65 20 75 35 70 50 C55 55 40 52 30 48 C20 55 10 50 10 45 Z" 
+      stroke="#ff6600" strokeWidth="2.5" strokeLinecap="round" 
+      style={{ filter: 'drop-shadow(0px 0px 6px #ff6600)' }} />
+    <path d="M25 28 C28 20 35 15 42 22" stroke="#ff6600" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="58" cy="32" r="3" fill="#ff6600" style={{ filter: 'drop-shadow(0px 0px 4px #ff6600)' }} />
+  </svg>
+);
+
+const NeonBearIcon = ({ className = "w-8 h-8" }) => (
+  <svg viewBox="0 0 80 60" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 48 C10 30 25 18 45 20 C65 18 75 32 72 50 C55 58 35 55 20 50 Z" 
+      stroke="#d946ef" strokeWidth="2.5" strokeLinecap="round" 
+      style={{ filter: 'drop-shadow(0px 0px 6px #d946ef)' }} />
+    <path d="M20 22 C18 14 26 12 30 18" stroke="#d946ef" strokeWidth="2" />
+    <path d="M62 20 C66 12 74 16 70 24" stroke="#d946ef" strokeWidth="2" />
+  </svg>
+);
+
+const DEFAULT_PRIMARY_RATE = 2500000; // $2.5M per hour
+const DEFAULT_SECONDARY_RATE = 1250000; // $1.25M per hour
+const DEFAULT_CHAIN_GOAL = 10000;
+const DEFAULT_EVENT_MIN_HITS = 25; // Overall event minimum target hits
+const DEFAULT_PAGE_NOTES = `Add you name to an available slot, if you cannot make your shift then remove your name and let us know ASAP.
+Have several easy targets (Level 1 Inactives are perfect) for emergency hits if they are needed, and hit by 1:00 at the latest on the clock. Use the 'Notes' Boxes to flag any issues`;
+
+// ======================= FIREBASE (real backend, replaces Claude's db/user capabilities) =======================
+const FIREBASE_CONFIG = {
+  apiKey: "AIzaSyC_GQF5vKQ4dpZyX4CJ3rkRm-2q4kVQnn4",
+  authDomain: "zns-chain-watcher.firebaseapp.com",
+  databaseURL: "https://zns-chain-watcher-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "zns-chain-watcher",
+  storageBucket: "zns-chain-watcher.firebasestorage.app",
+  messagingSenderId: "645621212761",
+  appId: "1:645621212761:web:221c62f3fe7b647e82b348"
+};
+
+/**
+ * Wraps Firebase Realtime Database so the rest of this file can keep using
+ * the exact same doc()/collection() shape it always has (.get/.set/.delete/
+ * .onSnapshot, docChanges(), {exists, data()}). Nothing below this function
+ * needed to change when we swapped backends — only this adapter did.
+ */
+function makeRealtimeDbShim(rtdb) {
+  function docHandle(path) {
+    const ref = rtdb.ref(path);
+    return {
+      get: async () => {
+        const snap = await ref.once('value');
+        return { exists: snap.exists(), data: () => snap.val() };
+      },
+      set: async (data) => { await ref.set(data); return null; },
+      delete: async () => { await ref.remove(); return null; },
+      onSnapshot: (cb, errCb) => {
+        const handler = (snap) => cb({ exists: snap.exists(), data: () => snap.val() });
+        ref.on('value', handler, errCb || (() => {}));
+        return () => ref.off('value', handler);
+      }
+    };
+  }
+
+  function collectionHandle(name) {
+    const ref = rtdb.ref(name);
+    return {
+      doc: (id) => docHandle(`${name}/${id}`),
+      get: async () => {
+        const snap = await ref.once('value');
+        const val = snap.val() || {};
+        const docs = Object.entries(val).map(([id, data]) => ({ id, data: () => data }));
+        return { empty: docs.length === 0, docs };
+      },
+      onSnapshot: (cb, errCb) => {
+        let prevKeys = new Set();
+        const handler = (snap) => {
+          const val = snap.val() || {};
+          const currentKeys = new Set(Object.keys(val));
+          const changes = [];
+          currentKeys.forEach(id => {
+            changes.push({ type: prevKeys.has(id) ? 'modified' : 'added', doc: { id, data: () => val[id] } });
+          });
+          prevKeys.forEach(id => {
+            if (!currentKeys.has(id)) changes.push({ type: 'removed', doc: { id, data: () => null } });
+          });
+          prevKeys = currentKeys;
+          cb({ docChanges: () => changes });
+        };
+        ref.on('value', handler, errCb || (() => {}));
+        return () => ref.off('value', handler);
+      }
+    };
+  }
+
+  return {
+    doc: (path) => docHandle(path),
+    collection: (name) => collectionHandle(name)
+  };
+}
+
+const TIMEZONES = [
+  { label: 'TCT (UTC / Torn Time)', value: 'UTC' },
+  { label: 'US Eastern (EST/EDT)', value: 'America/New_York' },
+  { label: 'US Central (CST/CDT)', value: 'America/Chicago' },
+  { label: 'US Mountain (MST/MDT)', value: 'America/Denver' },
+  { label: 'US Pacific (PST/PDT)', value: 'America/Los_Angeles' },
+  { label: 'Europe London (GMT/BST)', value: 'Europe/London' },
+  { label: 'Europe Central (CET/CEST)', value: 'Europe/Paris' },
+  { label: 'Asia Tokyo (JST)', value: 'Asia/Tokyo' },
+  { label: 'Australia Sydney (AEST/AEDT)', value: 'Australia/Sydney' }
+];
+
+// Demo roster removed for a clean slate — real faction members sign up directly in the roster.
+
+// Helper to format Date object as YYYY-MM-DD in UTC
+const formatDateToISO = (date) => {
+  return date.toISOString().split('T')[0];
+};
+
+// Helper to shift ISO date string by N days
+const shiftDateString = (dateStr, days) => {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  dt.setUTCDate(dt.getUTCDate() + days);
+  return formatDateToISO(dt);
+};
+
+const generateInitialShiftsForDate = (dateStr, isPastDay = false) => {
+  // Clean slate: every hour starts unassigned. Real members sign up
+  // directly in the roster — no demo/placeholder watchers.
+  const shifts = [];
+  for (let hour = 0; hour < 24; hour++) {
+    shifts.push({
+      hour, // 0 to 23 TCT
+      primaryWatcher: null,
+      secondaryWatcher: null,
+      primaryCompleted: false,
+      secondaryCompleted: false,
+      forceLocked: false,
+      passedOverride: false,
+      notes: ''
+    });
+  }
+  return shifts;
+};
+
+
+function App() {
+  const [activeTab, setActiveTab] = useState('schedule');
+  const [selectedTimezone, setSelectedTimezone] = useState('UTC');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [eventFilter, setEventFilter] = useState('all'); // 'all' | 'met' | 'below'
+  const [statsDayFilter, setStatsDayFilter] = useState('all'); // 'all' or specific date string
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  // Live Clock Ticks
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const currentTCTHour = currentTime.getUTCHours();
+  const todayDateStr = formatDateToISO(currentTime);
+
+  // Get tomorrow's date formatted in YYYY-MM-DD UTC for default start date
+  const defaultStartDate = useMemo(() => {
+    const tomorrow = new Date();
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+    return formatDateToISO(tomorrow);
+  }, []);
+
+  // Roster Settings State (Initialized early to prevent Temporal Dead Zone errors)
+  const [settings, setSettings] = useState({
+    primaryRate: DEFAULT_PRIMARY_RATE,
+    secondaryRate: DEFAULT_SECONDARY_RATE,
+    chainGoal: DEFAULT_CHAIN_GOAL,
+    eventMinHits: DEFAULT_EVENT_MIN_HITS,
+    factionName: "The ZOO - Night Shift",
+    chainStartDate: defaultStartDate,
+    chainStartHour: 18, // 18:00 TCT
+    chainDurationDays: 5,
+    chainStatus: 'scheduled', // 'scheduled' | 'active' | 'paused' | 'completed'
+    autoLockPassedHours: true,
+    leaderOverrideLock: false,
+    pageNotes: DEFAULT_PAGE_NOTES
+  });
+
+  // ---- Shared live data (Claude "db" capability) ----
+  // "shifts"          = current & future days, open to every signed-in member (sign up/edit).
+  // "shifts_archive"  = days that have already happened — read by everyone, but only
+  //                     writable by people with "Can edit" access (rank-gated retroactive edits).
+  // "config/settings" = roster settings — read by everyone, writable only by "Can edit" members.
+  const dbRef = useRef(null);
+  const [syncStatus, setSyncStatus] = useState('connecting'); // 'connecting' | 'live' | 'local'
+  const [isAdmin, setIsAdmin] = useState(false); // true if the signed-in Firebase user's uid is in /admins
+  const [authUser, setAuthUser] = useState(null); // Firebase auth user, or null if not logged in
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginEmail, setLoginEmail] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
+  const [loginBusy, setLoginBusy] = useState(false);
+  const [importText, setImportText] = useState('');
+  const [importStatus, setImportStatus] = useState(null); // { type: 'ok'|'err'|'info', message }
+  const [showGoalPrompt, setShowGoalPrompt] = useState(false);
+  const [goalPromptDismissed, setGoalPromptDismissed] = useState(false);
+  const [resetStatus, setResetStatus] = useState(null); // { type: 'ok'|'err', message }
+
+  // Published pages run in a sandboxed iframe where window.confirm/alert/prompt
+  // are blocked and silently return false — no dialog, no error, just nothing
+  // happens. This is a real in-app replacement that actually works.
+  const [confirmState, setConfirmState] = useState(null); // { message, resolve }
+  const askConfirm = (message) => new Promise((resolve) => setConfirmState({ message, resolve }));
+  const resolveConfirm = (result) => {
+    if (confirmState) confirmState.resolve(result);
+    setConfirmState(null);
+  };
+
+  const updateSettings = (patch) => {
+    setSettings(prev => {
+      const next = { ...prev, ...patch };
+      if (dbRef.current) {
+        dbRef.current.doc('config/settings').set(next).catch(() => {});
+      }
+      return next;
+    });
+  };
+
+  useEffect(() => {
+    let unsubSettings = null, unsubChainSync = null, unsubRosterNames = null, unsubShifts = null, unsubArchive = null;
+    let cancelled = false;
+
+    (async () => {
+      let db = null;
+      try {
+        if (typeof firebase === 'undefined') throw new Error('Firebase SDK not loaded');
+        if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+        db = makeRealtimeDbShim(firebase.database());
+      } catch (e) {
+        db = null;
+      }
+      if (cancelled) return;
+      if (!db) {
+        setSyncStatus('local');
+        return;
+      }
+      dbRef.current = db;
+      const todayStr = formatDateToISO(new Date());
+
+      // One-time cleanup: wipe any earlier demo/test watchers so every faction
+      // starts from a genuinely clean roster the first time this version loads.
+      try {
+        const marker = await db.doc('config/resetV2').get();
+        if (!marker.exists) {
+          const qsOld = await db.collection('shifts').get();
+          for (const d of qsOld.docs) {
+            await db.collection('shifts').doc(d.id).set({ shifts: generateInitialShiftsForDate(d.id) }).catch(() => {});
+          }
+          const qsOldArchive = await db.collection('shifts_archive').get();
+          for (const d of qsOldArchive.docs) {
+            await db.collection('shifts_archive').doc(d.id).set({ shifts: generateInitialShiftsForDate(d.id) }).catch(() => {});
+          }
+          await db.doc('config/chainSync').set({ attackers: [], nonAttackerIds: [], chainLength: 0, chainStart: null, chainEnd: null, updatedAt: null, syncedBy: null }).catch(() => {});
+          await db.doc('config/resetV2').set({ done: true, at: Date.now() }).catch(() => {});
+        }
+      } catch (e) {}
+
+      // Seed + subscribe: settings
+      try {
+        const snap = await db.doc('config/settings').get();
+        if (snap.exists) {
+          setSettings(prev => ({ ...prev, ...snap.data() }));
+        } else {
+          await db.doc('config/settings').set(settings).catch(() => {});
+        }
+      } catch (e) {}
+
+      unsubSettings = db.doc('config/settings').onSnapshot((snap) => {
+        if (snap.exists) setSettings(prev => ({ ...prev, ...snap.data() }));
+      }, () => {});
+
+      // Seed + subscribe: chain sync (from pasted Torn chainreport JSON)
+      try {
+        const snap = await db.doc('config/chainSync').get();
+        if (snap.exists) {
+          setChainSync(prev => ({ ...prev, ...snap.data() }));
+        } else {
+          await db.doc('config/chainSync').set(chainSync).catch(() => {});
+        }
+      } catch (e) {}
+
+      unsubChainSync = db.doc('config/chainSync').onSnapshot((snap) => {
+        if (snap.exists) setChainSync(prev => ({ ...prev, ...snap.data() }));
+      }, () => {});
+
+      // Seed + subscribe: roster id->name cache (from pasted Torn faction/basic JSON)
+      try {
+        const snap = await db.doc('config/rosterNames').get();
+        if (snap.exists) {
+          setRosterNames(snap.data().idToName || {});
+        } else {
+          await db.doc('config/rosterNames').set({ idToName: rosterNames }).catch(() => {});
+        }
+      } catch (e) {}
+
+      unsubRosterNames = db.doc('config/rosterNames').onSnapshot((snap) => {
+        if (snap.exists) setRosterNames(snap.data().idToName || {});
+      }, () => {});
+
+      // Seed + subscribe: open "shifts" collection (current & future days)
+      try {
+        const qs = await db.collection('shifts').get();
+        if (qs.empty) {
+          const entries = Object.entries(shiftsByDate);
+          for (const [dateStr, shifts] of entries) {
+            await db.collection('shifts').doc(dateStr).set({ shifts }).catch(() => {});
+          }
+        } else {
+          const loaded = {};
+          qs.docs.forEach(d => { loaded[d.id] = d.data().shifts; });
+          setShiftsByDate(prev => ({ ...prev, ...loaded }));
+
+          // Sweep any day that has already passed into the admin-only archive,
+          // so only higher-ranked members can retroactively edit it from here on.
+          for (const d of qs.docs) {
+            if (d.id < todayStr) {
+              try {
+                await db.collection('shifts_archive').doc(d.id).set({ shifts: d.data().shifts });
+                await db.collection('shifts').doc(d.id).delete();
+              } catch (e) {}
+            }
+          }
+        }
+      } catch (e) {}
+
+      unsubShifts = db.collection('shifts').onSnapshot((qsnap) => {
+        setShiftsByDate(prev => {
+          const next = { ...prev };
+          qsnap.docChanges().forEach(ch => {
+            if (ch.type === 'removed') delete next[ch.doc.id];
+            else next[ch.doc.id] = ch.doc.data().shifts;
+          });
+          return next;
+        });
+      }, () => {});
+
+      // Seed + subscribe: admin-only "shifts_archive" collection (past days)
+      unsubArchive = db.collection('shifts_archive').onSnapshot((qsnap) => {
+        setShiftsByDate(prev => {
+          const next = { ...prev };
+          qsnap.docChanges().forEach(ch => {
+            if (ch.type === 'removed') delete next[ch.doc.id];
+            else next[ch.doc.id] = ch.doc.data().shifts;
+          });
+          return next;
+        });
+      }, () => {});
+
+      if (!cancelled) setSyncStatus('live');
+    })();
+
+    return () => {
+      cancelled = true;
+      if (unsubSettings) unsubSettings();
+      if (unsubChainSync) unsubChainSync();
+      if (unsubRosterNames) unsubRosterNames();
+      if (unsubShifts) unsubShifts();
+      if (unsubArchive) unsubArchive();
+    };
+    // eslint-disable-next-line
+  }, []);
+
+  // Officer authentication (Firebase Auth) — replaces Claude's user.canEdit().
+  // Regular members never need to sign in at all; this only matters for
+  // whoever needs Roster Settings / retroactive edit access.
+  useEffect(() => {
+    if (typeof firebase === 'undefined' || !firebase.auth) return;
+    const unsub = firebase.auth().onAuthStateChanged(async (user) => {
+      setAuthUser(user);
+      if (user && dbRef.current) {
+        try {
+          const snap = await dbRef.current.doc(`admins/${user.uid}`).get();
+          setIsAdmin(snap.exists && snap.data() === true);
+        } catch (e) {
+          setIsAdmin(false);
+        }
+      } else {
+        setIsAdmin(false);
+      }
+    });
+    return () => unsub();
+  }, []);
+
+  const handleOfficerLogin = async () => {
+    setLoginError('');
+    if (!loginEmail.trim() || !loginPassword) {
+      setLoginError('Enter both an email and a password.');
+      return;
+    }
+    setLoginBusy(true);
+    try {
+      await firebase.auth().signInWithEmailAndPassword(loginEmail.trim(), loginPassword);
+      setShowLoginModal(false);
+      setLoginEmail('');
+      setLoginPassword('');
+    } catch (e) {
+      setLoginError(e.message || 'Login failed.');
+    } finally {
+      setLoginBusy(false);
+    }
+  };
+
+  const handleOfficerLogout = async () => {
+    try { await firebase.auth().signOut(); } catch (e) {}
+  };
+
+  // If access changes (or resolves after the initial render) and a non-admin
+  // is sitting on the admin-only Settings tab, bounce them back to the roster.
+  useEffect(() => {
+    if (!isAdmin && activeTab === 'settings') setActiveTab('schedule');
+  }, [isAdmin, activeTab]);
+
+  // Calculate Chain Start Time and Live Countdown
+  const chainStartTime = useMemo(() => {
+    if (!settings.chainStartDate) return null;
+    const [y, m, d] = settings.chainStartDate.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d, settings.chainStartHour || 0, 0, 0));
+  }, [settings.chainStartDate, settings.chainStartHour]);
+
+  const timeUntilStart = useMemo(() => {
+    if (!chainStartTime) return null;
+    const diff = chainStartTime.getTime() - currentTime.getTime();
+    if (diff <= 0) return null;
+
+    const seconds = Math.floor((diff / 1000) % 60);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    return { days, hours, minutes, seconds, totalMs: diff };
+  }, [chainStartTime, currentTime]);
+
+  // Selected Roster Date State for Day Navigation
+  const [selectedDate, setSelectedDate] = useState(defaultStartDate);
+
+  // Multi-day Shifts State: { [dateStr]: [24 shift objects] }
+  const [shiftsByDate, setShiftsByDate] = useState(() => {
+    const dayMinus2 = shiftDateString(defaultStartDate, -2);
+    const dayMinus1 = shiftDateString(defaultStartDate, -1);
+    const day0 = defaultStartDate;
+    const day1 = shiftDateString(defaultStartDate, 1);
+
+    return {
+      [dayMinus2]: generateInitialShiftsForDate(dayMinus2, true),
+      [dayMinus1]: generateInitialShiftsForDate(dayMinus1, true),
+      [day0]: generateInitialShiftsForDate(day0, false),
+      [day1]: generateInitialShiftsForDate(day1, false),
+    };
+  });
+
+  // Chain hit data, synced from Torn's own API via copy/paste (see the Chain
+  // Sync tab) — this page can't fetch api.torn.com directly (hosted pages
+  // can't make outbound requests to outside sites), so a member opens the
+  // Torn API URL in their own tab, copies the JSON, and pastes it here.
+  const [chainSync, setChainSync] = useState({
+    attackers: [],       // [{ id, hits, respect, bonusHits }]
+    nonAttackerIds: [],  // [id, ...] — zero hits this chain
+    chainLength: 0,
+    chainStart: null,
+    chainEnd: null,
+    updatedAt: null,
+    syncedBy: null
+  });
+  const [rosterNames, setRosterNames] = useState({}); // { "<torn_id>": "Name" }
+
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('zoo_torn_api_key') || '');
+  const [rosterPasteText, setRosterPasteText] = useState('');
+  const [chainPasteText, setChainPasteText] = useState('');
+  const [syncerName, setSyncerName] = useState(() => localStorage.getItem('zoo_syncer_name') || '');
+  const [rosterSyncMsg, setRosterSyncMsg] = useState(null); // { type: 'ok'|'error', text }
+  const [chainSyncMsg, setChainSyncMsg] = useState(null);
+
+  // Get or initialize shifts for a specific date
+  const currentDayShifts = useMemo(() => {
+    if (shiftsByDate[selectedDate]) {
+      return shiftsByDate[selectedDate];
+    }
+    return generateInitialShiftsForDate(selectedDate, selectedDate < formatDateToISO(new Date()));
+  }, [shiftsByDate, selectedDate]);
+
+  // Helper to safely update shifts for currently selected date
+  const updateCurrentDayShifts = (updaterFn) => {
+    setShiftsByDate(prev => {
+      const existing = prev[selectedDate] || generateInitialShiftsForDate(selectedDate, selectedDate < formatDateToISO(new Date()));
+      const updated = updaterFn(existing);
+      if (dbRef.current) {
+        // Past days live in the admin-only archive; the server itself rejects
+        // this write for anyone without "Can edit" access — the lock UI just
+        // mirrors that so people aren't surprised by a silent failure.
+        const targetCollection = selectedDate < todayDateStr ? 'shifts_archive' : 'shifts';
+        dbRef.current.collection(targetCollection).doc(selectedDate).set({ shifts: updated }).catch(() => {});
+      }
+      return { ...prev, [selectedDate]: updated };
+    });
+  };
+
+  const getShiftLockStatus = (hour, isForceLocked, isPassedOverride) => {
+    // The manual padlock is absolute: once a leader switches it on, the names
+    // are locked for everyone — leaders included — until it's switched off
+    // again. It intentionally comes before everything else, admins included.
+    if (isForceLocked) return { isLocked: true, reason: 'MANUAL_LOCK', label: 'Locked (Padlock On)' };
+
+    // An hour that has already passed today locks itself automatically —
+    // for everyone, officers included — unless an officer has specifically
+    // switched the padlock to override just this passed hour.
+    if (settings.autoLockPassedHours && selectedDate === todayDateStr && hour < currentTCTHour) {
+      if (isPassedOverride) return { isLocked: false, reason: null };
+      return { isLocked: true, reason: 'PASSED', label: 'Expired / Passed' };
+    }
+
+    // Higher-ranked members ("Can edit" access) can retroactively change any
+    // other rostered watcher — past days included — everyone else follows
+    // the normal lock rules below.
+    if (isAdmin) return { isLocked: false, reason: null };
+    if (settings.chainStatus === 'paused') return { isLocked: true, reason: 'PAUSED', label: 'Chain Paused' };
+    if (settings.chainStatus === 'completed') return { isLocked: true, reason: 'CHAIN_ENDED', label: 'Chain Ended' };
+    
+    // Check if the selected date is in the past
+    if (selectedDate < todayDateStr) {
+      return { isLocked: true, reason: 'PAST_DATE', label: 'Past Day Archived' };
+    }
+
+    return { isLocked: false, reason: null };
+  };
+
+  const handleNameChange = (hour, role, name) => {
+    const shift = currentDayShifts.find(s => s.hour === hour);
+    const { isLocked } = getShiftLockStatus(hour, shift?.forceLocked, shift?.passedOverride);
+    if (isLocked) return;
+
+    updateCurrentDayShifts(prev => prev.map(s => {
+      if (s.hour === hour) {
+        return role === 'primary' 
+          ? { ...s, primaryWatcher: name, primaryCompleted: name ? s.primaryCompleted : false } 
+          : { ...s, secondaryWatcher: name, secondaryCompleted: name ? s.secondaryCompleted : false };
+      }
+      return s;
+    }));
+  };
+
+  const handleNoteChange = (hour, note) => {
+    const shift = currentDayShifts.find(s => s.hour === hour);
+    const { isLocked } = getShiftLockStatus(hour, shift?.forceLocked, shift?.passedOverride);
+    if (isLocked) return;
+
+    updateCurrentDayShifts(prev => prev.map(s => (
+      s.hour === hour ? { ...s, notes: note } : s
+    )));
+  };
+
+  const toggleCompletion = (hour, role) => {
+    const shift = currentDayShifts.find(s => s.hour === hour);
+    const { isLocked } = getShiftLockStatus(hour, shift?.forceLocked, shift?.passedOverride);
+    if (isLocked) return;
+
+    updateCurrentDayShifts(prev => prev.map(s => {
+      if (s.hour === hour) {
+        return role === 'primary' 
+          ? { ...s, primaryCompleted: !s.primaryCompleted } 
+          : { ...s, secondaryCompleted: !s.secondaryCompleted };
+      }
+      return s;
+    }));
+  };
+
+  const validateShiftsByDate = (data) => {
+    if (typeof data !== 'object' || data === null || Array.isArray(data)) {
+      throw new Error('Top level must be an object keyed by date (YYYY-MM-DD).');
+    }
+    for (const [dateStr, shifts] of Object.entries(data)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        throw new Error(`"${dateStr}" is not a YYYY-MM-DD date key.`);
+      }
+      if (!Array.isArray(shifts) || shifts.length !== 24) {
+        throw new Error(`${dateStr}: expected an array of 24 shift objects, got ${Array.isArray(shifts) ? shifts.length : typeof shifts}.`);
+      }
+      shifts.forEach((s, i) => {
+        if (typeof s !== 'object' || s === null) throw new Error(`${dateStr} hour ${i}: not an object.`);
+        if (s.hour !== i) throw new Error(`${dateStr} hour ${i}: shift.hour is ${s.hour}, expected ${i}.`);
+        if (!('primaryWatcher' in s) || !('secondaryWatcher' in s)) throw new Error(`${dateStr} hour ${i}: missing primaryWatcher/secondaryWatcher.`);
+      });
+    }
+  };
+
+  const handleImportShiftData = async () => {
+    setImportStatus(null);
+    let data;
+    try {
+      data = JSON.parse(importText);
+      validateShiftsByDate(data);
+    } catch (e) {
+      setImportStatus({ type: 'err', message: 'Invalid data: ' + e.message });
+      return;
+    }
+
+    const dateCount = Object.keys(data).length;
+    const allSlots = Object.values(data).flat();
+    const slotCount = allSlots.length;
+    const filledCount = allSlots.filter(s => s.primaryWatcher || s.secondaryWatcher).length;
+
+    const ok = await askConfirm(
+      `Import ${dateCount} date(s), ${slotCount} shift slots (${filledCount} with a watcher assigned)?\n\n` +
+      `This writes directly into the shared schedule everyone sees — existing shifts on these ` +
+      `same dates/hours will be OVERWRITTEN, not merged with what's already there. Continue?`
+    );
+    if (!ok) return;
+
+    if (!dbRef.current) {
+      setImportStatus({ type: 'err', message: 'Import failed: not connected to shared sync right now — try reloading the page.' });
+      return;
+    }
+
+    try {
+      setImportStatus({ type: 'info', message: 'Importing...' });
+      for (const [dateStr, shifts] of Object.entries(data)) {
+        const targetCollection = dateStr < todayDateStr ? 'shifts_archive' : 'shifts';
+        await dbRef.current.collection(targetCollection).doc(dateStr).set({ shifts });
+      }
+      setShiftsByDate(prev => ({ ...prev, ...data }));
+      setImportStatus({ type: 'ok', message: `Imported ${dateCount} date(s), ${filledCount} filled slot(s).` });
+      setImportText('');
+    } catch (e) {
+      setImportStatus({ type: 'err', message: 'Import failed: ' + e.message });
+    }
+  };
+
+  const toggleManualLockHour = (hour) => {
+    if (!isAdmin) return; // only members with edit access can lock/unlock a shift
+    updateCurrentDayShifts(prev => prev.map(s => {
+      if (s.hour !== hour) return s;
+
+      const isAutoPassedLocked = settings.autoLockPassedHours && selectedDate === todayDateStr && hour < currentTCTHour;
+
+      // If this hour is only locked because it's already passed (not a manual
+      // lock), the padlock's job here is to toggle the officer override for
+      // just that passed-hour lock, rather than setting the absolute lock.
+      if (isAutoPassedLocked && !s.forceLocked) {
+        return { ...s, passedOverride: !s.passedOverride };
+      }
+
+      // Otherwise it's the normal absolute manual lock toggle.
+      return { ...s, forceLocked: !s.forceLocked, passedOverride: false };
+    }));
+  };
+
+  const handleSaveApiKey = (key) => {
+    setApiKey(key);
+    localStorage.setItem('zoo_torn_api_key', key);
+  };
+
+  const handleSaveSyncerName = (name) => {
+    setSyncerName(name);
+    localStorage.setItem('zoo_syncer_name', name);
+  };
+
+  // Parses a pasted `GET /faction/{id}?selections=basic&key=...` response
+  // (the "members" object) into an id -> name map, and shares it.
+  const syncRosterNames = () => {
+    try {
+      const parsed = JSON.parse(rosterPasteText);
+      if (parsed.error) throw new Error(`Torn API error ${parsed.error.code}: ${parsed.error.error}`);
+      if (!parsed.members || typeof parsed.members !== 'object') {
+        throw new Error('That doesn\'t look like a faction roster response — expected a "members" object.');
+      }
+      const idToName = {};
+      Object.entries(parsed.members).forEach(([id, m]) => { idToName[id] = m.name; });
+
+      setRosterNames(idToName);
+      if (dbRef.current) {
+        dbRef.current.doc('config/rosterNames').set({ idToName, updatedAt: Date.now() }).catch(() => {});
+      }
+      setRosterSyncMsg({ type: 'ok', text: `Synced ${Object.keys(idToName).length} member names.` });
+      setRosterPasteText('');
+    } catch (e) {
+      setRosterSyncMsg({ type: 'error', text: e.message || 'Could not parse that as JSON.' });
+    }
+  };
+
+  // Parses a pasted `GET /v2/faction/chainreport?key=...` response into the
+  // shared chain-hit totals every member's page reads from.
+  const syncChainReport = () => {
+    try {
+      const parsed = JSON.parse(chainPasteText);
+      if (parsed.error) throw new Error(`Torn API error ${parsed.error.code}: ${parsed.error.error}`);
+      const report = parsed.chainreport;
+      if (!report) throw new Error('That doesn\'t look like a chain report response — expected a "chainreport" object.');
+
+      const attackers = (report.attackers || []).map(a => ({
+        id: a.id,
+        hits: (a.attacks && a.attacks.total) || 0,
+        respect: (a.respect && a.respect.total) || 0,
+        bonusHits: (a.attacks && a.attacks.bonuses) || 0
+      }));
+      const nonAttackerIds = report.non_attackers || [];
+
+      const next = {
+        attackers,
+        nonAttackerIds,
+        chainLength: (report.details && report.details.chain) || 0,
+        chainStart: report.start || null,
+        chainEnd: report.end || null,
+        updatedAt: Date.now(),
+        syncedBy: syncerName.trim() || null
+      };
+
+      setChainSync(next);
+      if (dbRef.current) {
+        dbRef.current.doc('config/chainSync').set(next).catch(() => {});
+      }
+      setChainSyncMsg({ type: 'ok', text: `Synced ${attackers.length} attackers, chain length ${next.chainLength}.` });
+      setChainPasteText('');
+    } catch (e) {
+      setChainSyncMsg({ type: 'error', text: e.message || 'Could not parse that as JSON.' });
+    }
+  };
+
+  // Deduped, sorted list of known member names (from the last roster sync)
+  // used to power the autofill dropdown on the name fields.
+  const syncedMemberNames = useMemo(() => {
+    return Array.from(new Set(Object.values(rosterNames))).sort((a, b) => a.localeCompare(b));
+  }, [rosterNames]);
+
+  // Chain-report hits joined to names, keyed by lowercased name so they
+  // match against however watchers typed their name into the roster.
+  const chainHitsByName = useMemo(() => {
+    const map = {};
+    chainSync.attackers.forEach(a => {
+      const name = rosterNames[String(a.id)] || `#${a.id}`;
+      map[name.toLowerCase()] = { hits: a.hits, respect: a.respect, bonusHits: a.bonusHits, id: a.id };
+    });
+    chainSync.nonAttackerIds.forEach(id => {
+      const name = rosterNames[String(id)] || `#${id}`;
+      if (!map[name.toLowerCase()]) map[name.toLowerCase()] = { hits: 0, respect: 0, bonusHits: 0, id };
+    });
+    return map;
+  }, [chainSync, rosterNames]);
+
+  // Compute player stats aggregating across all dates (or filtered by statsDayFilter)
+  const computePlayerStats = (dayFilter) => {
+    const stats = {};
+
+    const datesToInclude = Object.keys(shiftsByDate).filter(dateStr => {
+      if (dayFilter === 'all') return true;
+      return dateStr === dayFilter;
+    });
+
+    datesToInclude.forEach(dateStr => {
+      const dayShifts = shiftsByDate[dateStr] || [];
+
+      dayShifts.forEach(shift => {
+        if (shift.primaryWatcher) {
+          const name = shift.primaryWatcher;
+          if (!stats[name]) {
+            stats[name] = { 
+              name, 
+              primaryHours: 0, 
+              secondaryHours: 0, 
+              primaryCompletedHours: 0, 
+              secondaryCompletedHours: 0,
+              clockedSlotsSet: new Set()
+            };
+          }
+          stats[name].primaryHours += 1;
+          stats[name].clockedSlotsSet.add(`${dateStr}_${shift.hour}`);
+          if (shift.primaryCompleted) stats[name].primaryCompletedHours += 1;
+        }
+
+        if (shift.secondaryWatcher) {
+          const name = shift.secondaryWatcher;
+          if (!stats[name]) {
+            stats[name] = { 
+              name, 
+              primaryHours: 0, 
+              secondaryHours: 0, 
+              primaryCompletedHours: 0, 
+              secondaryCompletedHours: 0,
+              clockedSlotsSet: new Set()
+            };
+          }
+          stats[name].secondaryHours += 1;
+          stats[name].clockedSlotsSet.add(`${dateStr}_${shift.hour}`);
+          if (shift.secondaryCompleted) stats[name].secondaryCompletedHours += 1;
+        }
+      });
+    });
+
+    // Make sure everyone who has chain hits shows up even if they aren't
+    // currently on the shift roster for the selected day filter.
+    Object.entries(chainHitsByName).forEach(([lowerName, hitData]) => {
+      const existing = Object.values(stats).find(s => s.name.toLowerCase() === lowerName);
+      if (!existing) {
+        stats[lowerName] = {
+          name: rosterNames[String(hitData.id)] || lowerName,
+          primaryHours: 0,
+          secondaryHours: 0,
+          primaryCompletedHours: 0,
+          secondaryCompletedHours: 0,
+          clockedSlotsSet: new Set()
+        };
+      }
+    });
+
+    return Object.values(stats).map(p => {
+      const hitData = chainHitsByName[p.name.toLowerCase()] || { hits: 0, respect: 0, bonusHits: 0 };
+
+      const totalEventHits = hitData.hits;
+      const respectEarned = hitData.respect;
+      const bonusHits = hitData.bonusHits;
+
+      const totalHours = p.primaryHours + p.secondaryHours;
+      const grossVerifiedPay = (p.primaryCompletedHours * settings.primaryRate) + (p.secondaryCompletedHours * settings.secondaryRate);
+
+      const metEventMin = totalEventHits >= settings.eventMinHits;
+
+      const mascot = '🐾';
+
+      return {
+        ...p,
+        mascot,
+        totalHours,
+        totalEventHits,
+        respectEarned,
+        bonusHits,
+        grossVerifiedPay,
+        metEventMin
+      };
+    }).sort((a, b) => b.totalEventHits - a.totalEventHits);
+  };
+
+  const playerStats = useMemo(() => computePlayerStats(statsDayFilter),
+    [shiftsByDate, chainHitsByName, rosterNames, settings, statsDayFilter]);
+
+  const totalStats = useMemo(() => {
+    const totalHitsEvent = playerStats.reduce((acc, p) => acc + p.totalEventHits, 0);
+    const totalRespectEarned = playerStats.reduce((acc, p) => acc + p.respectEarned, 0);
+    const totalShiftHoursSignedUp = playerStats.reduce((acc, p) => acc + p.totalHours, 0);
+    const totalGrossPayout = playerStats.reduce((acc, p) => acc + p.grossVerifiedPay, 0);
+    const membersMeetingMin = playerStats.filter(p => p.metEventMin).length;
+
+    return {
+      totalHitsEvent,
+      totalRespectEarned,
+      totalShiftHoursSignedUp,
+      totalGrossPayout,
+      membersMeetingMin,
+      totalMembers: playerStats.length
+    };
+  }, [playerStats]);
+
+  // Prompt (once per session) when the whole-faction goal is reached, as
+  // long as the chain isn't already marked completed.
+  useEffect(() => {
+    if (
+      settings.chainGoal > 0 &&
+      totalStats.totalHitsEvent >= settings.chainGoal &&
+      settings.chainStatus !== 'completed' &&
+      !goalPromptDismissed
+    ) {
+      setShowGoalPrompt(true);
+    }
+  }, [totalStats.totalHitsEvent, settings.chainGoal, settings.chainStatus, goalPromptDismissed]);
+
+  const filteredEventPlayers = useMemo(() => {
+    return playerStats.filter(p => {
+      const matchesSearch = p.name.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!matchesSearch) return false;
+
+      if (eventFilter === 'met') return p.metEventMin;
+      if (eventFilter === 'below') return !p.metEventMin;
+      return true;
+    });
+  }, [playerStats, searchTerm, eventFilter]);
+
+  // Compute event days list for quick navigation buttons
+  const eventDaysList = useMemo(() => {
+    const list = [];
+    const count = settings.chainDurationDays || 5;
+    for (let i = 0; i < count; i++) {
+      const dateStr = shiftDateString(settings.chainStartDate, i);
+      list.push({
+        dayNumber: i + 1,
+        dateStr,
+        isStartDate: i === 0
+      });
+    }
+    return list;
+  }, [settings.chainStartDate, settings.chainDurationDays]);
+
+  const formatMoney = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(amount).replace('$', '$ ');
+  };
+
+  const formatTCTTime = (dateObj) => {
+    return dateObj.toISOString().substr(11, 8);
+  };
+
+  const getFormattedLocalHour = (tctHour, tz) => {
+    if (tz === 'UTC') return null;
+    try {
+      const date = new Date();
+      date.setUTCHours(tctHour, 0, 0, 0);
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: tz,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+      }).format(date);
+    } catch {
+      return null;
+    }
+  };
+
+  // Formats a shift as a 1-hour block, e.g. "15:00-16:00 TCT" instead of just the start time.
+  const getShiftBlockLabel = (tctHour, tz) => {
+    const startTCT = `${String(tctHour).padStart(2, '0')}:00`;
+    const endTCT = `${String((tctHour + 1) % 24).padStart(2, '0')}:00`;
+    const tctLabel = `${startTCT}-${endTCT} TCT`;
+
+    if (tz === 'UTC') return { tctLabel, localLabel: null };
+
+    const startLocal = getFormattedLocalHour(tctHour, tz);
+    const endLocal = getFormattedLocalHour((tctHour + 1) % 24, tz);
+    const localLabel = (startLocal && endLocal) ? `${startLocal}-${endLocal}` : null;
+
+    return { tctLabel, localLabel };
+  };
+
+  const exportEventCSV = () => {
+    let csv = "Member,Total Chain Hits,Respect Earned,Bonus Hits,Met Minimum Target,Shift Hours Signed Up,Gross Payout Owed\n";
+    playerStats.forEach(p => {
+      csv += `"${p.name}",${p.totalEventHits},${p.respectEarned},${p.bonusHits},${p.metEventMin ? 'Yes' : 'No'},${p.totalHours},$${p.grossVerifiedPay}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `The_ZOO_NightShift_Event_Hits_Report.csv`;
+    a.click();
+  };
+
+  // Final chain report — always the whole event regardless of whatever day
+  // filter happens to be selected on the Stats tab right now.
+  const generateChainEndReport = () => {
+    const finalStats = computePlayerStats('all').sort((a, b) => b.totalEventHits - a.totalEventHits);
+    const totalHits = finalStats.reduce((acc, p) => acc + p.totalEventHits, 0);
+    const totalRespect = finalStats.reduce((acc, p) => acc + p.respectEarned, 0);
+
+    let csv = `The ZOO — Night Shift Chain Report\n`;
+    csv += `Generated,${new Date().toLocaleString()}\n`;
+    csv += `Chain Goal,${settings.chainGoal}\n`;
+    csv += `Total Chain Hits,${totalHits}\n`;
+    csv += `Total Respect Earned,${totalRespect}\n`;
+    csv += `Chain Length (Torn Sync),${chainSync.chainLength || 0}\n\n`;
+    csv += "Member,Total Hits,Respect Earned,Bonus Hits,Primary Hours,Secondary Hours,Total Hours,Met Minimum Target\n";
+    finalStats.forEach(p => {
+      csv += `"${p.name}",${p.totalEventHits},${p.respectEarned},${p.bonusHits},${p.primaryHours},${p.secondaryHours},${p.totalHours},${p.metEventMin ? 'Yes' : 'No'}\n`;
+    });
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `The_ZOO_ChainEndReport_${todayDateStr}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
+
+  const handleConfirmEndChain = async () => {
+    const confirmed = await askConfirm(
+      'End the chain now?\n\nThis marks the chain as completed, locks the roster, and downloads a final report ' +
+      '(hits, respect, and hours picked up per member). This can be undone later in Roster Settings if needed.'
+    );
+    if (!confirmed) return;
+
+    generateChainEndReport();
+    updateSettings({ chainStatus: 'completed' });
+    setShowGoalPrompt(false);
+    setGoalPromptDismissed(true);
+  };
+
+  const handleResetChain = async () => {
+    const confirmed = await askConfirm(
+      'Reset the whole app for the next chain?\n\nThis clears every shift day, all notes, the synced chain hits/respect, ' +
+      'the roster name cache, and resets the chain status/dates back to defaults. This cannot be undone. Continue?'
+    );
+    if (!confirmed) return;
+    const doubleCheck = await askConfirm('Really sure? This wipes the shared roster for everyone in the faction.');
+    if (!doubleCheck) return;
+
+    const db = dbRef.current;
+    try {
+      if (db) {
+        const [liveDocs, archiveDocs] = await Promise.all([
+          db.collection('shifts').get(),
+          db.collection('shifts_archive').get()
+        ]);
+        await Promise.all(liveDocs.docs.map(d => db.collection('shifts').doc(d.id).delete().catch(() => {})));
+        await Promise.all(archiveDocs.docs.map(d => db.collection('shifts_archive').doc(d.id).delete().catch(() => {})));
+
+        const clearedChainSync = { attackers: [], nonAttackerIds: [], chainLength: 0, chainStart: null, chainEnd: null, updatedAt: null, syncedBy: null };
+        await db.doc('config/chainSync').set(clearedChainSync).catch(() => {});
+        await db.doc('config/rosterNames').set({ idToName: {} }).catch(() => {});
+
+        const resetSettings = {
+          ...settings,
+          chainStatus: 'scheduled',
+          chainStartDate: formatDateToISO(new Date()),
+          leaderOverrideLock: false
+        };
+        await db.doc('config/settings').set(resetSettings).catch(() => {});
+        setSettings(resetSettings);
+        setChainSync(clearedChainSync);
+        setRosterNames({});
+      }
+
+      // Rebuild a fresh, empty local schedule window so the page has
+      // something to show immediately without waiting on a re-sync.
+      const today = new Date();
+      const dayMinus1 = shiftDateString(formatDateToISO(today), -1);
+      const day0 = formatDateToISO(today);
+      const day1 = shiftDateString(formatDateToISO(today), 1);
+      const day2 = shiftDateString(formatDateToISO(today), 2);
+      const freshShifts = {
+        [dayMinus1]: generateInitialShiftsForDate(dayMinus1),
+        [day0]: generateInitialShiftsForDate(day0),
+        [day1]: generateInitialShiftsForDate(day1),
+        [day2]: generateInitialShiftsForDate(day2)
+      };
+      setShiftsByDate(freshShifts);
+      if (db) {
+        await Promise.all(Object.entries(freshShifts).map(([dateStr, shifts]) =>
+          db.collection('shifts').doc(dateStr).set({ shifts }).catch(() => {})
+        ));
+      }
+
+      setGoalPromptDismissed(false);
+      setSelectedDate(day0);
+      setResetStatus({ type: 'ok', message: 'Chain reset — ready for the next one.' });
+    } catch (e) {
+      setResetStatus({ type: 'err', message: 'Reset failed: ' + e.message });
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-[#05060b] text-slate-100 font-sans selection:bg-orange-500 selection:text-slate-950 overflow-x-hidden">
+
+      <datalist id="synced-member-names">
+        {syncedMemberNames.map(n => <option key={n} value={n} />)}
+      </datalist>
+
+      {/* Chain Goal Reached Prompt */}
+      {showGoalPrompt && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="max-w-md w-full bg-slate-950 border border-orange-500/60 rounded-2xl p-6 shadow-[0_0_40px_rgba(255,85,0,0.3)]">
+            <div className="flex items-center gap-2.5 mb-3">
+              <Target className="w-6 h-6 text-orange-400" />
+              <h2 className="text-lg font-extrabold text-slate-100">Chain Goal Reached!</h2>
+            </div>
+            <p className="text-sm text-slate-300 leading-relaxed mb-5">
+              The chain has reached your intended goal of <span className="font-bold text-orange-300">{settings.chainGoal.toLocaleString()} hits</span>{' '}
+              (currently at <span className="font-bold text-emerald-400">{totalStats.totalHitsEvent.toLocaleString()}</span>). End it now?
+            </p>
+            {isAdmin ? (
+              <div className="flex flex-col sm:flex-row gap-3">
+                <button
+                  onClick={handleConfirmEndChain}
+                  className="flex-1 px-4 py-2.5 bg-orange-600 hover:bg-orange-500 text-white text-sm font-extrabold rounded-xl transition"
+                >
+                  End Chain Now
+                </button>
+                <button
+                  onClick={() => { setShowGoalPrompt(false); setGoalPromptDismissed(true); }}
+                  className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl transition"
+                >
+                  Not Yet
+                </button>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-slate-500">Only a leader can end the chain — let one of them know it's time to wrap up.</p>
+                <button
+                  onClick={() => { setShowGoalPrompt(false); setGoalPromptDismissed(true); }}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl transition"
+                >
+                  Got It
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Generic in-app confirmation modal (replaces window.confirm, which is
+          silently blocked inside this page's sandbox and would otherwise
+          just do nothing when called). */}
+      {confirmState && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="max-w-md w-full bg-slate-950 border border-slate-700 rounded-2xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-2.5 mb-4">
+              <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+              <p className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap">{confirmState.message}</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => resolveConfirm(true)}
+                className="flex-1 px-4 py-2.5 bg-rose-700 hover:bg-rose-600 text-white text-sm font-extrabold rounded-xl transition"
+              >
+                Yes, Continue
+              </button>
+              <button
+                onClick={() => resolveConfirm(false)}
+                className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Officer Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="max-w-sm w-full bg-slate-950 border border-slate-700 rounded-2xl p-6 shadow-[0_0_40px_rgba(0,0,0,0.5)]">
+            <div className="flex items-center gap-2.5 mb-4">
+              <Shield className="w-5 h-5 text-emerald-400 shrink-0" />
+              <h2 className="text-base font-extrabold text-slate-100">Officer Login</h2>
+            </div>
+            <p className="text-xs text-slate-500 mb-4">
+              Regular members don't need to log in at all — this is only for leaders who need Roster Settings access.
+            </p>
+            <div className="space-y-2.5 mb-3">
+              <input
+                type="email"
+                value={loginEmail}
+                onChange={(e) => setLoginEmail(e.target.value)}
+                placeholder="Email"
+                className="w-full bg-black border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              />
+              <input
+                type="password"
+                value={loginPassword}
+                onChange={(e) => setLoginPassword(e.target.value)}
+                placeholder="Password"
+                onKeyDown={(e) => { if (e.key === 'Enter') handleOfficerLogin(); }}
+                className="w-full bg-black border border-slate-800 rounded-lg px-3 py-2 text-sm text-slate-100 placeholder-slate-600 focus:outline-none focus:border-emerald-500"
+              />
+            </div>
+            {loginError && <p className="text-xs font-bold text-rose-400 mb-3">{loginError}</p>}
+            <div className="flex gap-3">
+              <button
+                onClick={handleOfficerLogin}
+                disabled={loginBusy}
+                className="flex-1 px-4 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-extrabold rounded-xl transition"
+              >
+                {loginBusy ? 'Logging in...' : 'Log In'}
+              </button>
+              <button
+                onClick={() => { setShowLoginModal(false); setLoginError(''); }}
+                className="flex-1 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-sm font-bold rounded-xl transition"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top Banner Header with Neon Animals */}
+      <header className="border-b border-orange-500/30 bg-black/90 backdrop-blur sticky z-50 shadow-[0_4px_20px_rgba(255,85,0,0.15)]" style={{ top: "env(safe-area-inset-top, 0px)" }}>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 p-2 bg-slate-950 rounded-2xl border border-orange-500/40 shadow-[0_0_15px_rgba(255,85,0,0.2)]">
+              <NeonOwlIcon className="w-8 h-8 sm:w-10 sm:h-10" />
+              <NeonTigerIcon className="w-6 h-6 sm:w-8 sm:h-8 hidden sm:block" />
+            </div>
+
+            <div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                {}
+                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-white flex flex-wrap items-center gap-x-2">
+                  THE ZOO <span className="text-orange-500 drop-shadow-[0_0_10px_#ff5500]">- NIGHT SHIFT</span>
+                </h1>
+                <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-orange-950 text-orange-400 border border-orange-500/50 uppercase">
+                  Chain Watcher
+                </span>
+              </div>
+              {}
+              <p className="text-xs text-slate-400 font-medium">
+                Chain Watcher Sign-Up App
+              </p>
+            </div>
+          </div>
+
+          {/* Time & Clock Controls */}
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
+            
+            {/* Sync Status Badge */}
+            <div
+              className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 ${
+                syncStatus === 'live'
+                  ? 'bg-emerald-950/70 border-emerald-500/50'
+                  : syncStatus === 'local'
+                  ? 'bg-amber-950/70 border-amber-500/50'
+                  : 'bg-slate-950 border-slate-800'
+              }`}
+              title={
+                syncStatus === 'live'
+                  ? 'Connected — everyone viewing this page shares the same live roster.'
+                  : syncStatus === 'local'
+                  ? 'Shared sync unavailable — this view is local-only right now.'
+                  : 'Connecting to shared roster...'
+              }
+            >
+              <span className={`w-2 h-2 rounded-full ${
+                syncStatus === 'live' ? 'bg-emerald-400 animate-pulse' : syncStatus === 'local' ? 'bg-amber-400' : 'bg-slate-500 animate-pulse'
+              }`} />
+              <span className={`text-[10px] font-extrabold uppercase tracking-wide ${
+                syncStatus === 'live' ? 'text-emerald-300' : syncStatus === 'local' ? 'text-amber-300' : 'text-slate-400'
+              }`}>
+                {syncStatus === 'live' ? 'Live Sync' : syncStatus === 'local' ? 'Local Only' : 'Connecting...'}
+              </span>
+            </div>
+
+            {/* Live TCT Clock Badge */}
+            <div className="px-3 py-1.5 bg-slate-950 rounded-xl border border-slate-800 flex items-center gap-2">
+              <Clock className="w-4 h-4 text-cyan-400 animate-pulse" />
+              <div className="text-right">
+                <span className="block text-[10px] font-extrabold text-slate-500 uppercase leading-none">TCT Time</span>
+                <span className="text-xs font-mono font-black text-cyan-300">{formatTCTTime(currentTime)}</span>
+              </div>
+            </div>
+
+            {/* Timezone Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-950 rounded-xl border border-slate-800 px-2.5 py-1.5">
+              <Globe className="w-4 h-4 text-yellow-400 shrink-0" />
+              <select
+                value={selectedTimezone}
+                onChange={(e) => setSelectedTimezone(e.target.value)}
+                className="bg-transparent text-xs font-semibold text-slate-300 focus:outline-none cursor-pointer"
+              >
+                {TIMEZONES.map(tz => (
+                  <option key={tz.value} value={tz.value} className="bg-slate-900 text-slate-200">
+                    {tz.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Officer Login / Account Badge */}
+            {authUser ? (
+              <div className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 ${isAdmin ? 'bg-emerald-950/70 border-emerald-500/50' : 'bg-slate-950 border-slate-800'}`}>
+                <Shield className={`w-4 h-4 shrink-0 ${isAdmin ? 'text-emerald-400' : 'text-slate-500'}`} />
+                <div className="text-left">
+                  <span className={`block text-[10px] font-black leading-none ${isAdmin ? 'text-emerald-300' : 'text-slate-400'}`}>
+                    {isAdmin ? 'Officer' : 'Pending Access'}
+                  </span>
+                  <span className="text-[9px] text-slate-500 leading-none">{authUser.email}</span>
+                  {!isAdmin && (
+                    <span className="block text-[9px] text-amber-400 leading-none mt-0.5" title="Send this UID to your leader to add under Firebase > Realtime Database > admins">
+                      UID: {authUser.uid}
+                    </span>
+                  )}
+                </div>
+                <button onClick={handleOfficerLogout} className="ml-1 text-[10px] font-bold text-slate-500 hover:text-slate-300 underline">
+                  Log Out
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className="flex items-center gap-1.5 bg-slate-950 rounded-xl border border-slate-800 hover:border-slate-600 px-2.5 py-1.5 text-xs font-bold text-slate-400 hover:text-slate-200 transition"
+              >
+                <Shield className="w-4 h-4" /> Officer Login
+              </button>
+            )}
+
+          </div>
+
+        </div>
+      </header>
+
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        {/* Faction Instructions / Announcement Banner */}
+        <div className="mb-6 bg-amber-950/30 border border-amber-500/40 rounded-2xl p-4 shadow-[0_0_15px_rgba(245,158,11,0.1)]">
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <p className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+              <Info className="w-3.5 h-3.5" /> Faction Notes
+            </p>
+            {isAdmin && (
+              <span className="text-[10px] text-slate-500">Editable by leaders — everyone sees this</span>
+            )}
+          </div>
+          {isAdmin ? (
+            <textarea
+              value={settings.pageNotes}
+              onChange={(e) => updateSettings({ pageNotes: e.target.value })}
+              rows={3}
+              placeholder="Standing instructions for the whole faction..."
+              className="w-full bg-black/60 border border-amber-500/30 rounded-xl px-3.5 py-2.5 text-xs text-amber-100 placeholder-slate-600 leading-relaxed focus:outline-none focus:border-amber-400 resize-y"
+            />
+          ) : (
+            <p className="text-xs text-amber-100 leading-relaxed whitespace-pre-wrap">
+              {settings.pageNotes}
+            </p>
+          )}
+        </div>
+
+        {/* Live Chain Start Countdown Banner */}
+        <div className="mb-6 bg-gradient-to-r from-slate-950 via-orange-950/40 to-slate-950 border border-orange-500/50 rounded-2xl p-4 sm:p-5 shadow-[0_0_25px_rgba(255,85,0,0.2)] flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3 text-center md:text-left">
+            <div className="p-3 bg-orange-500/10 border border-orange-500/40 rounded-2xl hidden sm:flex items-center justify-center text-orange-400 shrink-0 shadow-[0_0_15px_rgba(255,85,0,0.25)]">
+              <Timer className="w-7 h-7 animate-pulse" />
+            </div>
+            <div>
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                <span className="w-2 h-2 rounded-full bg-orange-500 animate-ping" />
+                <h2 className="text-xs uppercase font-extrabold tracking-widest text-orange-400">
+                  {timeUntilStart ? 'Chain Start Countdown' : 'Chain Status'}
+                </h2>
+              </div>
+              <p className="text-xs text-slate-300 font-medium mt-0.5">
+                Target Start: <span className="text-white font-mono font-bold">{settings.chainStartDate} at {String(settings.chainStartHour).padStart(2, '0')}:00 TCT</span>
+              </p>
+            </div>
+          </div>
+
+          {timeUntilStart ? (
+            <div className="flex items-center gap-2 sm:gap-3 bg-black/80 border border-orange-500/40 px-4 py-2.5 rounded-2xl shadow-inner">
+              <div className="text-center min-w-[48px]">
+                <span className="block text-xl sm:text-2xl font-mono font-black text-orange-400 drop-shadow-[0_0_10px_#ff5500]">
+                  {String(timeUntilStart.days).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Days</span>
+              </div>
+              <span className="text-xl font-bold text-slate-600">:</span>
+              <div className="text-center min-w-[48px]">
+                <span className="block text-xl sm:text-2xl font-mono font-black text-orange-400 drop-shadow-[0_0_10px_#ff5500]">
+                  {String(timeUntilStart.hours).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Hours</span>
+              </div>
+              <span className="text-xl font-bold text-slate-600">:</span>
+              <div className="text-center min-w-[48px]">
+                <span className="block text-xl sm:text-2xl font-mono font-black text-orange-400 drop-shadow-[0_0_10px_#ff5500]">
+                  {String(timeUntilStart.minutes).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Mins</span>
+              </div>
+              <span className="text-xl font-bold text-slate-600">:</span>
+              <div className="text-center min-w-[48px]">
+                <span className="block text-xl sm:text-2xl font-mono font-black text-cyan-400 drop-shadow-[0_0_10px_#00f0ff] animate-pulse">
+                  {String(timeUntilStart.seconds).padStart(2, '0')}
+                </span>
+                <span className="text-[9px] uppercase font-bold text-slate-500 tracking-wider">Secs</span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2 px-4 py-2 bg-emerald-950/80 border border-emerald-500/60 rounded-xl text-emerald-400 font-extrabold text-xs shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
+              CHAIN IS LIVE & IN PROGRESS
+            </div>
+          )}
+        </div>
+
+        {/* Faction Total Hits & Respect (from Chain Sync) */}
+        <div className="mb-6 flex flex-wrap gap-3">
+          <div className="flex items-center gap-2.5 bg-black/80 border border-emerald-500/40 rounded-xl px-4 py-2.5 shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+            <Crosshair className="w-4 h-4 text-emerald-400 shrink-0" />
+            <div>
+              <p className="text-[9px] font-extrabold uppercase text-slate-500 tracking-wider leading-none">Total Hits</p>
+              <p className="text-lg font-mono font-black text-emerald-400 leading-tight">{totalStats.totalHitsEvent.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2.5 bg-black/80 border border-purple-500/40 rounded-xl px-4 py-2.5 shadow-[0_0_12px_rgba(192,132,252,0.15)]">
+            <Award className="w-4 h-4 text-purple-400 shrink-0" />
+            <div>
+              <p className="text-[9px] font-extrabold uppercase text-slate-500 tracking-wider leading-none">Respect Earned</p>
+              <p className="text-lg font-mono font-black text-purple-300 leading-tight">{totalStats.totalRespectEarned.toLocaleString()}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-500 self-center font-mono">
+            {chainSync.updatedAt ? `Synced ${new Date(chainSync.updatedAt).toLocaleString()}${chainSync.syncedBy ? ` by ${chainSync.syncedBy}` : ''}` : 'Not synced yet — see Chain Sync tab'}
+          </div>
+        </div>
+
+        {/* Navigation Bar */}
+        <div className="flex border-b border-slate-800/80 mb-6 space-x-2 sm:space-x-4 overflow-x-auto pb-1">
+          <button
+            onClick={() => setActiveTab('schedule')}
+            className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 whitespace-nowrap transition-all rounded-t-xl ${
+              activeTab === 'schedule'
+                ? 'border-orange-500 text-orange-400 bg-orange-500/10 shadow-[0_0_15px_rgba(255,85,0,0.2)] font-extrabold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Calendar className="w-4 h-4 text-orange-400" />
+            24-Hour Shift Roster
+          </button>
+
+          <button
+            onClick={() => setActiveTab('event-min')}
+            className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 whitespace-nowrap transition-all rounded-t-xl ${
+              activeTab === 'event-min'
+                ? 'border-cyan-400 text-cyan-400 bg-cyan-400/10 shadow-[0_0_15px_rgba(0,240,255,0.2)] font-extrabold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Target className="w-4 h-4 text-cyan-400" />
+            Event Minimum Participation
+            <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-cyan-950 text-cyan-300 border border-cyan-500/50">
+              {settings.eventMinHits} Hits Target
+            </span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('payouts')}
+            className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 whitespace-nowrap transition-all rounded-t-xl ${
+              activeTab === 'payouts'
+                ? 'border-emerald-400 text-emerald-400 bg-emerald-400/10 shadow-[0_0_15px_rgba(16,185,129,0.2)] font-extrabold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4 text-emerald-400" />
+            Payout & Payroll Breakdown
+          </button>
+
+          <button
+            onClick={() => setActiveTab('api')}
+            className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 whitespace-nowrap transition-all rounded-t-xl ${
+              activeTab === 'api'
+                ? 'border-purple-400 text-purple-300 bg-purple-500/10 shadow-[0_0_15px_rgba(192,132,252,0.2)] font-extrabold'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            <Key className="w-4 h-4 text-purple-400" />
+            Chain Sync
+          </button>
+
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('settings')}
+              className={`flex items-center gap-2 px-5 py-3 font-bold text-sm border-b-2 whitespace-nowrap transition-all rounded-t-xl ${
+                activeTab === 'settings'
+                  ? 'border-yellow-400 text-yellow-300 bg-yellow-500/10 shadow-[0_0_15px_rgba(250,204,21,0.2)] font-extrabold'
+                  : 'border-transparent text-slate-400 hover:text-slate-200'
+              }`}
+              title="Only visible to members with edit access"
+            >
+              <Settings className="w-4 h-4 text-yellow-400" />
+              Roster Settings
+            </button>
+          )}
+        </div>
+
+        {activeTab === 'schedule' && (
+          <div className="space-y-4">
+
+            {/* Multi-Day Event Navigation Bar */}
+            <div className="bg-black/90 border border-orange-500/50 rounded-2xl p-4 shadow-[0_0_20px_rgba(255,85,0,0.15)] flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-4">
+              
+              {/* Day Stepper Controls */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setSelectedDate(prev => shiftDateString(prev, -1))}
+                  className="px-3 py-2 bg-slate-900 border border-slate-700 hover:border-orange-500 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shrink-0"
+                  title="View Previous Day"
+                >
+                  ← Prev Day
+                </button>
+
+                <div className="flex items-center gap-2 bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5">
+                  <Calendar className="w-4 h-4 text-orange-400 shrink-0" />
+                  <input
+                    type="date"
+                    value={selectedDate}
+                    onChange={(e) => setSelectedDate(e.target.value)}
+                    className="bg-transparent text-xs font-mono font-bold text-orange-400 focus:outline-none cursor-pointer"
+                  />
+                </div>
+
+                <button
+                  onClick={() => setSelectedDate(prev => shiftDateString(prev, 1))}
+                  className="px-3 py-2 bg-slate-900 border border-slate-700 hover:border-orange-500 text-slate-200 rounded-xl text-xs font-bold transition flex items-center gap-1 shrink-0"
+                  title="View Next Day"
+                >
+                  Next Day →
+                </button>
+
+                {selectedDate !== todayDateStr && (
+                  <button
+                    onClick={() => setSelectedDate(todayDateStr)}
+                    className="px-2.5 py-1.5 bg-orange-950 border border-orange-500/60 text-orange-300 hover:bg-orange-900 rounded-xl text-xs font-black transition shadow-[0_0_10px_rgba(255,85,0,0.2)] ml-1"
+                  >
+                    Jump to Today
+                  </button>
+                )}
+              </div>
+
+              {/* Quick Select Event Day Tabs */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-3">
+                <span className="text-[10px] font-extrabold uppercase text-slate-500 shrink-0 mr-1">Event Days:</span>
+                {eventDaysList.map(ed => {
+                  const isSelected = selectedDate === ed.dateStr;
+                  const isToday = todayDateStr === ed.dateStr;
+
+                  return (
+                    <button
+                      key={ed.dateStr}
+                      onClick={() => setSelectedDate(ed.dateStr)}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition border flex items-center gap-1.5 ${
+                        isSelected
+                          ? 'bg-orange-500 text-slate-950 border-orange-400 font-extrabold shadow-[0_0_12px_#ff5500]'
+                          : isToday
+                          ? 'bg-emerald-950/80 border-emerald-500/60 text-emerald-300'
+                          : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                      }`}
+                    >
+                      <span>Day {ed.dayNumber}</span>
+                      <span className="text-[10px] opacity-80 font-mono">({ed.dateStr.slice(5)})</span>
+                      {isToday && <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Active Day Indicator Badge */}
+              <div className="flex items-center gap-2 self-start lg:self-auto shrink-0">
+                {selectedDate < todayDateStr ? (
+                  <span className="px-3 py-1 rounded-full bg-slate-900 border border-slate-700 text-slate-400 text-xs font-bold flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-slate-400" /> Past Day (Archived Roster)
+                  </span>
+                ) : selectedDate === todayDateStr ? (
+                  <span className="px-3 py-1 rounded-full bg-emerald-950 border border-emerald-500/80 text-emerald-400 text-xs font-black flex items-center gap-1.5 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" /> Active Today
+                  </span>
+                ) : (
+                  <span className="px-3 py-1 rounded-full bg-cyan-950 border border-cyan-500/80 text-cyan-300 text-xs font-bold flex items-center gap-1.5">
+                    <CalendarPlus className="w-3 h-3 text-cyan-400" /> Future Day Planning
+                  </span>
+                )}
+              </div>
+
+            </div>
+            
+            <div className="p-4 bg-black/80 border border-orange-500/40 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-[0_0_15px_rgba(255,85,0,0.15)]">
+              <div className="flex items-center gap-3">
+                <Info className="w-5 h-5 text-orange-400 shrink-0" />
+                <p className="text-xs text-slate-300 leading-relaxed font-medium">
+                  Viewing shift schedule for <span className="text-orange-400 font-bold font-mono">{selectedDate}</span>. Type your name directly into any slot to sign up or update coverage!
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setActiveTab('api')}
+                  className="px-3.5 py-1.5 bg-cyan-950/80 border border-cyan-500/60 hover:bg-cyan-900 text-cyan-300 text-xs font-black rounded-xl flex items-center gap-1.5 transition shadow-[0_0_10px_rgba(0,240,255,0.2)]"
+                  title="Sync live chain hit totals from Torn"
+                >
+                  <Crosshair className="w-3.5 h-3.5 text-cyan-400" /> Go to Chain Sync
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {currentDayShifts.map((shift) => {
+                const shiftBlock = getShiftBlockLabel(shift.hour, selectedTimezone);
+                const isCurrentHour = selectedDate === todayDateStr && currentTCTHour === shift.hour;
+                const lockInfo = getShiftLockStatus(shift.hour, shift.forceLocked, shift.passedOverride);
+                const isAutoPassedLocked = settings.autoLockPassedHours && selectedDate === todayDateStr && shift.hour < currentTCTHour;
+
+                return (
+                  <div 
+                    key={shift.hour}
+                    className={`relative rounded-2xl border p-4 transition-all ${
+                      lockInfo.isLocked
+                        ? 'bg-black/90 border-slate-900 opacity-70' 
+                        : isCurrentHour 
+                        ? 'bg-black border-orange-500 shadow-[0_0_20px_rgba(255,85,0,0.4)] ring-1 ring-orange-500' 
+                        : 'bg-black/70 border-slate-800/80 hover:border-slate-700'
+                    }`}
+                  >
+                    {isCurrentHour && !lockInfo.isLocked && (
+                      <span className="absolute -top-2.5 right-3 bg-orange-500 text-slate-950 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow-[0_0_10px_#ff5500]">
+                        CURRENT TCT HOUR
+                      </span>
+                    )}
+
+                    {lockInfo.isLocked && (
+                      <span className="absolute -top-2.5 right-3 bg-slate-900 text-slate-400 border border-slate-700 text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full shadow flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" /> {lockInfo.label}
+                      </span>
+                    )}
+
+                    {/* Hour Title */}
+                    <div className="flex items-baseline justify-between border-b border-slate-800/80 pb-2.5 mb-3">
+                      <div>
+                        <span className={`font-mono text-lg font-black ${
+                          lockInfo.isLocked ? 'text-slate-500' : 'text-slate-100'
+                        }`}>
+                          {shiftBlock.tctLabel}
+                        </span>
+                        {shiftBlock.localLabel && (
+                          <span className="block text-xs font-mono text-yellow-400/90 mt-0.5">
+                            ({shiftBlock.localLabel} Local)
+                          </span>
+                        )}
+                      </div>
+                      
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-widest">
+                          Slot #{shift.hour + 1}
+                        </span>
+                        {isAdmin ? (
+                          <button
+                            onClick={() => toggleManualLockHour(shift.hour)}
+                            className="p-1 text-slate-600 hover:text-slate-300 transition"
+                            title={
+                              shift.forceLocked
+                                ? 'Unlock this shift (names become editable again)'
+                                : isAutoPassedLocked
+                                ? (shift.passedOverride
+                                    ? 'Re-lock this passed hour (remove your override)'
+                                    : 'This hour auto-locked because it passed — click to override and unlock it for editing')
+                                : 'Lock this shift completely — locks names for everyone, including leaders, until switched off'
+                            }
+                          >
+                            <Lock className={`w-3 h-3 ${
+                              shift.forceLocked ? 'text-orange-400' : (isAutoPassedLocked && !shift.passedOverride) ? 'text-slate-500' : (isAutoPassedLocked && shift.passedOverride) ? 'text-emerald-400' : ''
+                            }`} />
+                          </button>
+                        ) : (
+                          (shift.forceLocked || (isAutoPassedLocked && !shift.passedOverride)) && (
+                            <span className="p-1 text-orange-400" title={shift.forceLocked ? 'Locked by a faction leader' : 'This hour has passed and locked automatically'}>
+                              <Lock className="w-3 h-3" />
+                            </span>
+                          )
+                        )}
+                      </div>
+                    </div>
+
+                    {}
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`flex items-center gap-1.5 font-bold ${
+                          lockInfo.isLocked ? 'text-slate-500' : 'text-emerald-400'
+                        }`}>
+                          <Eye className="w-3.5 h-3.5" /> Primary Watcher
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500">${(settings.primaryRate/1000000).toFixed(2)}M/hr</span>
+                      </div>
+
+                      <div className={`p-2 rounded-xl border transition-all ${
+                        lockInfo.isLocked 
+                          ? 'bg-slate-950/50 border-slate-900 opacity-60' 
+                          : shift.primaryWatcher 
+                          ? 'bg-slate-950 border-emerald-500/50 shadow-[0_0_10px_rgba(16,185,129,0.15)]' 
+                          : 'bg-slate-950/70 border-slate-800 focus-within:border-emerald-500/60'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base shrink-0">
+                            {shift.primaryWatcher ? '🦉' : '👤'}
+                          </span>
+                          <input
+                            type="text"
+                            value={shift.primaryWatcher || ''}
+                            onChange={(e) => handleNameChange(shift.hour, 'primary', e.target.value)}
+                            disabled={lockInfo.isLocked}
+                            placeholder="Type or pick Primary Watcher..."
+                            list="synced-member-names"
+                            className="w-full bg-transparent text-xs font-bold text-slate-100 placeholder-slate-600 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-500"
+                          />
+                          
+                          {shift.primaryWatcher && !lockInfo.isLocked && (
+                            <button
+                              onClick={() => handleNameChange(shift.hour, 'primary', '')}
+                              className="p-1 text-slate-500 hover:text-rose-400 rounded transition"
+                              title="Clear name"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {shift.primaryWatcher && !lockInfo.isLocked && (
+                            <button
+                              onClick={() => toggleCompletion(shift.hour, 'primary')}
+                              title={shift.primaryCompleted ? 'Mark unverified' : 'Mark completed'}
+                              className={`p-1 rounded transition ${
+                                shift.primaryCompleted 
+                                  ? 'text-emerald-400 bg-emerald-500/20' 
+                                  : 'text-slate-600 hover:text-slate-400'
+                              }`}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {shift.primaryWatcher && (
+                          <div className="flex items-center justify-between text-[11px] pt-1.5 mt-1.5 border-t border-slate-800/80">
+                            <span className="text-slate-400">Chain Hits (Total):</span>
+                            <span className="font-mono font-bold text-emerald-400">{(chainHitsByName[shift.primaryWatcher.trim().toLowerCase()]?.hits) || 0} Hits</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className={`flex items-center gap-1.5 font-bold ${
+                          lockInfo.isLocked ? 'text-slate-500' : 'text-cyan-400'
+                        }`}>
+                          <Shield className="w-3.5 h-3.5" /> Secondary Watcher
+                        </span>
+                        <span className="text-[10px] font-mono text-slate-500">${(settings.secondaryRate/1000000).toFixed(2)}M/hr</span>
+                      </div>
+
+                      <div className={`p-2 rounded-xl border transition-all ${
+                        lockInfo.isLocked 
+                          ? 'bg-slate-950/50 border-slate-900 opacity-60' 
+                          : shift.secondaryWatcher 
+                          ? 'bg-slate-950 border-cyan-500/50 shadow-[0_0_10px_rgba(0,240,255,0.15)]' 
+                          : 'bg-slate-950/70 border-slate-800 focus-within:border-cyan-500/60'
+                      }`}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-base shrink-0">
+                            {shift.secondaryWatcher ? '🐅' : '👤'}
+                          </span>
+                          <input
+                            type="text"
+                            value={shift.secondaryWatcher || ''}
+                            onChange={(e) => handleNameChange(shift.hour, 'secondary', e.target.value)}
+                            disabled={lockInfo.isLocked}
+                            placeholder="Type or pick Secondary Watcher..."
+                            list="synced-member-names"
+                            className="w-full bg-transparent text-xs font-bold text-slate-100 placeholder-slate-600 focus:outline-none disabled:cursor-not-allowed disabled:text-slate-500"
+                          />
+
+                          {shift.secondaryWatcher && !lockInfo.isLocked && (
+                            <button
+                              onClick={() => handleNameChange(shift.hour, 'secondary', '')}
+                              className="p-1 text-slate-500 hover:text-rose-400 rounded transition"
+                              title="Clear name"
+                            >
+                              <XCircle className="w-4 h-4" />
+                            </button>
+                          )}
+
+                          {shift.secondaryWatcher && !lockInfo.isLocked && (
+                            <button
+                              onClick={() => toggleCompletion(shift.hour, 'secondary')}
+                              title={shift.secondaryCompleted ? 'Mark unverified' : 'Mark completed'}
+                              className={`p-1 rounded transition ${
+                                shift.secondaryCompleted 
+                                  ? 'text-cyan-400 bg-cyan-500/20' 
+                                  : 'text-slate-600 hover:text-slate-400'
+                              }`}
+                            >
+                              <CheckCircle className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {shift.secondaryWatcher && (
+                          <div className="flex items-center justify-between text-[11px] pt-1.5 mt-1.5 border-t border-slate-800/80">
+                            <span className="text-slate-400">Chain Hits (Total):</span>
+                            <span className="font-mono font-bold text-cyan-400">{(chainHitsByName[shift.secondaryWatcher.trim().toLowerCase()]?.hits) || 0} Hits</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Shift Notes */}
+                    <div className="mt-3 pt-3 border-t border-slate-800/80">
+                      <label className="flex items-center gap-1.5 text-[10px] font-extrabold uppercase text-slate-500 mb-1.5">
+                        <Info className="w-3 h-3 text-slate-500" /> Shift Notes
+                      </label>
+                      <textarea
+                        value={shift.notes || ''}
+                        onChange={(e) => handleNoteChange(shift.hour, e.target.value)}
+                        disabled={lockInfo.isLocked}
+                        placeholder="Anything the next watcher should know..."
+                        rows={2}
+                        className="w-full bg-slate-950/70 border border-slate-800 rounded-xl px-2.5 py-1.5 text-xs text-slate-300 placeholder-slate-600 focus:outline-none focus:border-slate-600 disabled:cursor-not-allowed disabled:text-slate-500 resize-none transition-colors"
+                      />
+                    </div>
+
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'event-min' && (
+          <div className="space-y-6">
+            
+            {/* Day Filter Controls for Performance Stats */}
+            <div className="p-3 bg-black/90 border border-cyan-500/40 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <span className="text-xs font-bold text-cyan-400 flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-cyan-400" /> Filter Stats by Event Day:
+              </span>
+              <select
+                value={statsDayFilter}
+                onChange={(e) => setStatsDayFilter(e.target.value)}
+                className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-mono font-bold text-cyan-300 focus:outline-none"
+              >
+                <option value="all">Entire Chain Event (Cumulative All Days)</option>
+                {eventDaysList.map(ed => (
+                  <option key={ed.dateStr} value={ed.dateStr}>
+                    Day {ed.dayNumber} ({ed.dateStr})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Faction Goal Progress (whole-event combined target) */}
+            <div className="bg-black/80 border border-orange-500/50 rounded-2xl p-5 shadow-[0_0_20px_rgba(255,85,0,0.15)]">
+              <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                <p className="text-xs font-extrabold text-orange-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <Target className="w-4 h-4 text-orange-400" /> Faction Goal — Combined Hits (Whole Event)
+                </p>
+                <p className="font-mono font-black text-orange-300">
+                  {totalStats.totalHitsEvent.toLocaleString()} / {settings.chainGoal.toLocaleString()} Hits
+                  {' '}({Math.min(100, Math.round((totalStats.totalHitsEvent / (settings.chainGoal || 1)) * 100))}%)
+                </p>
+              </div>
+              <div className="w-full h-3 bg-slate-950 rounded-full border border-slate-800 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-orange-600 to-orange-400 transition-all duration-500"
+                  style={{ width: `${Math.min(100, Math.round((totalStats.totalHitsEvent / (settings.chainGoal || 1)) * 100))}%` }}
+                />
+              </div>
+              {totalStats.totalHitsEvent >= settings.chainGoal && (
+                <p className="text-xs text-orange-300 font-bold mt-2 flex items-center gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5" /> Faction goal reached!
+                </p>
+              )}
+            </div>
+
+            {/* Top Event Target KPI Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-black/80 border border-cyan-500/40 rounded-2xl p-5 shadow-[0_0_15px_rgba(0,240,255,0.15)]">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Event Minimum Target</p>
+                  <Target className="w-5 h-5 text-cyan-400" />
+                </div>
+                <p className="text-3xl font-black text-cyan-400 mt-1 font-mono drop-shadow-[0_0_8px_#00f0ff]">{settings.eventMinHits} Hits</p>
+                <p className="text-xs text-slate-400 mt-2">Target required across entire event per member</p>
+              </div>
+
+              <div className="bg-black/80 border border-emerald-500/40 rounded-2xl p-5 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Total Chain Hits (Torn Sync)</p>
+                  <Crosshair className="w-5 h-5 text-emerald-400" />
+                </div>
+                <p className="text-3xl font-black text-emerald-400 mt-1 font-mono drop-shadow-[0_0_8px_#10b981]">{totalStats.totalHitsEvent} Hits</p>
+                <p className="text-xs text-slate-400 mt-2">
+                  {chainSync.updatedAt ? `Last synced ${new Date(chainSync.updatedAt).toLocaleString()}${chainSync.syncedBy ? ` by ${chainSync.syncedBy}` : ''}` : 'Not synced yet — see the Chain Sync tab'}
+                </p>
+              </div>
+
+              <div className="bg-black/80 border border-orange-500/40 rounded-2xl p-5 shadow-[0_0_15px_rgba(255,85,0,0.15)]">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Members Met Target</p>
+                  <CheckCircle className="w-5 h-5 text-orange-400" />
+                </div>
+                <p className="text-3xl font-black text-orange-400 mt-1 font-mono drop-shadow-[0_0_8px_#ff5500]">
+                  {totalStats.membersMeetingMin} / {totalStats.totalMembers}
+                </p>
+                <p className="text-xs text-slate-400 mt-2">{Math.round((totalStats.membersMeetingMin / (totalStats.totalMembers || 1)) * 100)}% Compliance Rate</p>
+              </div>
+            </div>
+
+            {/* Event Hit Audit Leaderboard */}
+            <div className="bg-black/80 border border-cyan-500/30 rounded-2xl overflow-hidden shadow-2xl">
+              
+              <div className="p-4 border-b border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-black">
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-100 flex items-center gap-2">
+                    <Target className="w-5 h-5 text-cyan-400" /> Member Event Hit Audit Leaderboard
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Simple tracking of total hits made by each member across the event (watcher duty + off-shift hits).
+                  </p>
+                </div>
+
+                {/* Filters & Export */}
+                <div className="flex items-center gap-2 flex-wrap">
+                  <div className="relative">
+                    <Search className="w-3.5 h-3.5 text-slate-500 absolute left-2.5 top-2.5" />
+                    <input
+                      type="text"
+                      placeholder="Search member..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 w-36"
+                    />
+                  </div>
+
+                  <select
+                    value={eventFilter}
+                    onChange={(e) => setEventFilter(e.target.value)}
+                    className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-300 focus:outline-none"
+                  >
+                    <option value="all">All Members</option>
+                    <option value="met">Met Target ({settings.eventMinHits}+)</option>
+                    <option value="below">Below Target (&lt;{settings.eventMinHits})</option>
+                  </select>
+
+                  <button
+                    onClick={exportEventCSV}
+                    className="px-3 py-1.5 bg-cyan-950 border border-cyan-500/60 hover:bg-cyan-900 text-cyan-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition"
+                  >
+                    <Download className="w-3.5 h-3.5" /> Export Report
+                  </button>
+                </div>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950 border-b border-slate-800 text-[11px] uppercase tracking-widest text-slate-400 font-bold">
+                      <th className="py-3.5 px-4">Member Mascot</th>
+                      <th className="py-3.5 px-4">Total Chain Hits</th>
+                      <th className="py-3.5 px-4">Progress vs Target ({settings.eventMinHits})</th>
+                      <th className="py-3.5 px-4">Shift Hours Signed Up</th>
+                      <th className="py-3.5 px-4">Respect Earned</th>
+                      <th className="py-3.5 px-4 text-right">Event Goal Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-sm">
+                    {filteredEventPlayers.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="py-8 text-center text-slate-500">
+                          No faction members match the selected filter criteria.
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredEventPlayers.map((p) => {
+                        const progressPercent = Math.min(100, Math.round((p.totalEventHits / settings.eventMinHits) * 100));
+
+                        return (
+                          <tr key={p.name} className="hover:bg-slate-900/40 transition">
+                            <td className="py-3.5 px-4 font-bold text-slate-100 flex items-center gap-2.5">
+                              <span className="w-8 h-8 rounded-xl bg-black border border-slate-700 flex items-center justify-center text-base shadow">
+                                {p.mascot}
+                              </span>
+                              {p.name}
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono font-black text-base text-cyan-400">
+                              {p.totalEventHits} Hits
+                            </td>
+
+                            <td className="py-3.5 px-4 w-52">
+                              <div className="flex items-center justify-between text-[10px] font-mono mb-1 text-slate-400">
+                                <span>{progressPercent}%</span>
+                                <span>{p.totalEventHits} / {settings.eventMinHits} Hits</span>
+                              </div>
+                              <div className="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800">
+                                <div 
+                                  className={`h-full rounded-full transition-all ${
+                                    p.metEventMin ? 'bg-emerald-400 shadow-[0_0_8px_#10b981]' : 'bg-orange-500 shadow-[0_0_8px_#ff5500]'
+                                  }`} 
+                                  style={{ width: `${progressPercent}%` }}
+                                />
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono text-xs text-slate-300">
+                              {p.totalHours} Hrs
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono text-xs text-slate-400">
+                              {p.respectEarned.toLocaleString()}
+                            </td>
+
+                            <td className="py-3.5 px-4 text-right">
+                              {p.metEventMin ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-black text-emerald-400 bg-emerald-950/80 border border-emerald-500/50 px-3 py-1 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.3)]">
+                                  <CheckCircle className="w-3.5 h-3.5" /> Target Met
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-black text-amber-400 bg-amber-950/80 border border-amber-500/50 px-3 py-1 rounded-full shadow">
+                                  <AlertCircle className="w-3.5 h-3.5" /> Needs {settings.eventMinHits - p.totalEventHits} Hits
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {activeTab === 'payouts' && (
+          <div className="space-y-6">
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="bg-black/80 border border-emerald-500/40 rounded-2xl p-5 shadow-[0_0_15px_rgba(16,185,129,0.15)]">
+                <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Total Gross Payout Owed</p>
+                <p className="text-3xl font-black text-emerald-400 mt-1 font-mono drop-shadow-[0_0_8px_#10b981]">{formatMoney(totalStats.totalGrossPayout)}</p>
+                <p className="text-xs text-slate-400 mt-2">Calculated from verified completed shifts</p>
+              </div>
+
+              <div className="bg-black/80 border border-emerald-500/30 rounded-2xl p-5 shadow">
+                <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Primary Watcher Rate</p>
+                <p className="text-2xl font-black text-emerald-400 mt-1 font-mono">${(settings.primaryRate/1000000).toFixed(2)}M / hr</p>
+                <p className="text-xs text-slate-400 mt-2">Adjustable in roster settings</p>
+              </div>
+
+              <div className="bg-black/80 border border-cyan-500/30 rounded-2xl p-5 shadow">
+                <p className="text-xs font-extrabold text-slate-400 uppercase tracking-widest">Secondary Watcher Rate</p>
+                <p className="text-2xl font-black text-cyan-400 mt-1 font-mono">${(settings.secondaryRate/1000000).toFixed(2)}M / hr</p>
+                <p className="text-xs text-slate-400 mt-2">Adjustable in roster settings</p>
+              </div>
+            </div>
+
+            <div className="bg-black/80 border border-emerald-500/30 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-black">
+                <div>
+                  <h2 className="text-base font-extrabold text-slate-100 flex items-center gap-2">
+                    <BarChart3 className="w-5 h-5 text-emerald-400" /> Night Shift Watcher Payroll
+                  </h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Hourly payouts earned based on verified Primary ($/hr) and Secondary ($/hr) watcher duty hours.
+                  </p>
+                </div>
+
+                <button
+                  onClick={exportEventCSV}
+                  className="px-3.5 py-1.5 bg-emerald-950 border border-emerald-500/60 hover:bg-emerald-900 text-emerald-300 text-xs font-bold rounded-xl flex items-center gap-1.5 transition"
+                >
+                  <Download className="w-3.5 h-3.5" /> Export Payroll
+                </button>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950 border-b border-slate-800 text-[11px] uppercase tracking-widest text-slate-400 font-bold">
+                      <th className="py-3.5 px-4">Watcher Mascot</th>
+                      <th className="py-3.5 px-4">Primary Hours</th>
+                      <th className="py-3.5 px-4">Secondary Hours</th>
+                      <th className="py-3.5 px-4">Total Shift Hours</th>
+                      <th className="py-3.5 px-4">Total Chain Hits (Torn Sync)</th>
+                      <th className="py-3.5 px-4 text-right">Gross Payout Owed</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-sm">
+                    {playerStats.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="py-8 text-center text-slate-500">
+                          No watcher shifts logged yet.
+                        </td>
+                      </tr>
+                    ) : (
+                      playerStats.map((p) => {
+                        return (
+                          <tr key={p.name} className="hover:bg-slate-900/40 transition">
+                            <td className="py-3.5 px-4 font-bold text-slate-100 flex items-center gap-2.5">
+                              <span className="w-8 h-8 rounded-xl bg-black border border-slate-700 flex items-center justify-center text-base shadow">
+                                {p.mascot}
+                              </span>
+                              {p.name}
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono text-xs text-emerald-400 font-bold">
+                              {p.primaryCompletedHours}h Primary
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono text-xs text-cyan-400 font-bold">
+                              {p.secondaryCompletedHours}h Secondary
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono text-xs text-slate-300">
+                              {p.totalHours} Hours
+                            </td>
+
+                            <td className="py-3.5 px-4 font-mono text-sm font-bold text-yellow-400">
+                              {p.totalEventHits} Hits
+                            </td>
+
+                            <td className="py-3.5 px-4 text-right font-mono font-black text-base text-emerald-400">
+                              {formatMoney(p.grossVerifiedPay)}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {activeTab === 'api' && (
+          <div className="space-y-6">
+
+            <div className="bg-black/80 border border-purple-500/40 rounded-2xl p-6 shadow-2xl">
+              <h2 className="text-base font-extrabold text-slate-100 flex items-center gap-2 border-b border-slate-800/80 pb-4 mb-4">
+                <Key className="w-5 h-5 text-purple-400" /> Chain Sync (via Torn's API)
+              </h2>
+
+              <div className="p-3.5 bg-amber-950/40 border border-amber-500/40 rounded-xl flex items-start gap-2.5 mb-5">
+                <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-200 leading-relaxed">
+                  This page can't call Torn's API directly — hosted pages like this one aren't allowed to make outbound
+                  requests to outside websites, for security reasons. So instead: open Torn's own API link in a new tab
+                  (buttons below build it from your key), copy the JSON it shows you, and paste it in. Whoever does this
+                  updates the numbers for the whole faction instantly — no need for everyone to do it.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-2">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-slate-400 mb-1.5">
+                    Your Torn API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={apiKey}
+                    onChange={(e) => handleSaveApiKey(e.target.value)}
+                    placeholder="Needs Public access — same tier as your normal key"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-mono text-purple-300 focus:outline-none focus:border-purple-500 transition"
+                  />
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    Kept locally on your device only — never sent anywhere by this page, only used to build the links below in your own browser.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-slate-400 mb-1.5">
+                    Your Name (for the "last synced by" note)
+                  </label>
+                  <input
+                    type="text"
+                    value={syncerName}
+                    onChange={(e) => handleSaveSyncerName(e.target.value)}
+                    placeholder="e.g. ZooKeeper"
+                    list="synced-member-names"
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm font-bold text-slate-200 focus:outline-none focus:border-purple-500 transition"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Step 1: Roster name sync (occasional — only needs re-doing when the faction roster changes) */}
+            <div className="bg-black/80 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+              <h3 className="text-sm font-extrabold text-slate-100 flex items-center gap-2 mb-1">
+                <Search className="w-4 h-4 text-slate-400" /> Step 1 — Sync Member Names (do this occasionally)
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">Torn's chain data only gives player IDs, not names — this maps IDs to names so the roster can match them up. Only needs redoing when your faction roster changes.</p>
+
+              <a
+                href={apiKey ? `https://api.torn.com/faction/?selections=basic&key=${encodeURIComponent(apiKey)}` : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold mb-3 transition ${
+                  apiKey ? 'bg-slate-900 border border-slate-700 hover:bg-slate-800 text-slate-200' : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed pointer-events-none'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" /> 1. Open Roster JSON in a New Tab (needs API key above)
+              </a>
+
+              <textarea
+                value={rosterPasteText}
+                onChange={(e) => setRosterPasteText(e.target.value)}
+                placeholder="2. Paste the full JSON response here..."
+                rows={4}
+                className="w-full bg-black border border-slate-800 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:border-slate-600 resize-y"
+              />
+
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  onClick={syncRosterNames}
+                  disabled={!rosterPasteText.trim()}
+                  className="px-4 py-2 bg-slate-800 border border-slate-600 hover:bg-slate-700 disabled:opacity-40 disabled:cursor-not-allowed text-slate-100 text-xs font-black rounded-xl flex items-center gap-1.5 transition"
+                >
+                  <CheckCircle className="w-3.5 h-3.5" /> 3. Parse & Sync Names
+                </button>
+                {rosterSyncMsg && (
+                  <span className={`text-xs font-bold ${rosterSyncMsg.type === 'ok' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {rosterSyncMsg.text}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2">{Object.keys(rosterNames).length} member name(s) currently synced.</p>
+            </div>
+
+            {/* Step 2: Chain report sync (the one to refresh often during an active chain) */}
+            <div className="bg-black/80 border border-cyan-500/40 rounded-2xl p-6 shadow-2xl">
+              <h3 className="text-sm font-extrabold text-slate-100 flex items-center gap-2 mb-1">
+                <Crosshair className="w-4 h-4 text-cyan-400" /> Step 2 — Sync Chain Hits (refresh often during a chain)
+              </h3>
+              <p className="text-xs text-slate-500 mb-4">Pulls total hits, respect, and bonus hits per member for the current/latest chain. This is the number compared against the event minimum target.</p>
+
+              <a
+                href={apiKey ? `https://api.torn.com/v2/faction/chainreport?key=${encodeURIComponent(apiKey)}` : undefined}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold mb-3 transition ${
+                  apiKey ? 'bg-cyan-950 border border-cyan-500/60 hover:bg-cyan-900 text-cyan-300' : 'bg-slate-900 border border-slate-800 text-slate-600 cursor-not-allowed pointer-events-none'
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" /> 1. Open Chain Report JSON in a New Tab (needs API key above)
+              </a>
+
+              <textarea
+                value={chainPasteText}
+                onChange={(e) => setChainPasteText(e.target.value)}
+                placeholder="2. Paste the full JSON response here..."
+                rows={4}
+                className="w-full bg-black border border-slate-800 rounded-xl px-3 py-2.5 text-xs font-mono text-slate-300 placeholder-slate-600 focus:outline-none focus:border-cyan-600 resize-y"
+              />
+
+              <div className="flex items-center gap-3 mt-3">
+                <button
+                  onClick={syncChainReport}
+                  disabled={!chainPasteText.trim()}
+                  className="px-4 py-2 bg-cyan-950 border border-cyan-500/60 hover:bg-cyan-900 disabled:opacity-40 disabled:cursor-not-allowed text-cyan-300 text-xs font-black rounded-xl flex items-center gap-1.5 transition"
+                >
+                  <Zap className="w-3.5 h-3.5" /> 3. Parse & Sync Chain Hits
+                </button>
+                {chainSyncMsg && (
+                  <span className={`text-xs font-bold ${chainSyncMsg.type === 'ok' ? 'text-emerald-400' : 'text-rose-400'}`}>
+                    {chainSyncMsg.text}
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-slate-500 mt-2">
+                {chainSync.updatedAt
+                  ? `Last synced ${new Date(chainSync.updatedAt).toLocaleString()}${chainSync.syncedBy ? ` by ${chainSync.syncedBy}` : ''} — Chain length ${chainSync.chainLength}`
+                  : 'Not synced yet.'}
+              </p>
+            </div>
+
+            <div className="bg-black/80 border border-purple-500/30 rounded-2xl overflow-hidden shadow-2xl">
+              <div className="p-4 border-b border-slate-800 flex items-center justify-between bg-black">
+                <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                  <Crosshair className="w-4 h-4 text-purple-400" /> Synced Chain Hit Totals
+                </h3>
+                <span className="text-xs text-slate-400 font-mono">
+                  Chain Length: {chainSync.chainLength}
+                </span>
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-slate-950 border-b border-slate-800 text-[11px] uppercase tracking-widest text-slate-400 font-bold">
+                      <th className="py-2.5 px-4">Member</th>
+                      <th className="py-2.5 px-4">Total Hits</th>
+                      <th className="py-2.5 px-4">Respect Earned</th>
+                      <th className="py-2.5 px-4">Bonus Hits</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60 text-xs">
+                    {chainSync.attackers.length === 0 && chainSync.nonAttackerIds.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="py-8 text-center text-slate-500">
+                          No chain data synced yet — use the form above.
+                        </td>
+                      </tr>
+                    ) : (
+                      [...chainSync.attackers]
+                        .sort((a, b) => b.hits - a.hits)
+                        .map((a) => (
+                          <tr key={a.id} className="hover:bg-slate-900/30 font-mono">
+                            <td className="py-2.5 px-4 font-bold text-slate-200">
+                              {rosterNames[String(a.id)] || `#${a.id}`}
+                            </td>
+                            <td className="py-2.5 px-4 text-emerald-400 font-bold">
+                              {a.hits}
+                            </td>
+                            <td className="py-2.5 px-4 text-slate-400">
+                              {a.respect.toLocaleString()}
+                            </td>
+                            <td className="py-2.5 px-4 text-orange-400">
+                              {a.bonusHits}
+                            </td>
+                          </tr>
+                        ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        )}
+
+        {activeTab === 'settings' && isAdmin && (
+          <div className="max-w-4xl mx-auto space-y-6">
+            
+            <div className="bg-black/80 border border-yellow-500/40 rounded-2xl p-6 shadow-2xl">
+              <h2 className="text-lg font-extrabold text-slate-100 flex items-center gap-2 border-b border-slate-800 pb-4 mb-6">
+                <Timer className="w-5 h-5 text-yellow-400" /> Event Start Date, Time & Multi-Day Controls
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-yellow-400 mb-1.5">
+                    Start Date (YYYY-MM-DD)
+                  </label>
+                  <input
+                    type="date"
+                    value={settings.chainStartDate}
+                    onChange={(e) => updateSettings({ chainStartDate: e.target.value })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-yellow-400 focus:outline-none focus:border-yellow-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-yellow-400 mb-1.5">
+                    Start Time (TCT Hour)
+                  </label>
+                  <select
+                    value={settings.chainStartHour}
+                    onChange={(e) => updateSettings({ chainStartHour: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-yellow-400 focus:outline-none"
+                  >
+                    {Array.from({ length: 24 }).map((_, h) => (
+                      <option key={h} value={h}>{String(h).padStart(2, '0')}:00 TCT</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-yellow-400 mb-1.5">
+                    Chain Duration (Days)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="30"
+                    value={settings.chainDurationDays}
+                    onChange={(e) => updateSettings({ chainDurationDays: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-yellow-400 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3 bg-slate-950 p-4 rounded-xl border border-slate-800">
+                <label className="flex items-center justify-between cursor-pointer">
+                  <div className="flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-orange-400" />
+                    <div>
+                      <p className="text-xs font-bold text-slate-200">Auto-Lock Passed Shift Hours</p>
+                      <p className="text-[11px] text-slate-400">Locks shifts once their hour has passed — officers can override individual hours with the padlock.</p>
+                    </div>
+                  </div>
+                  <input
+                    type="checkbox"
+                    checked={settings.autoLockPassedHours}
+                    onChange={(e) => updateSettings({ autoLockPassedHours: e.target.checked })}
+                    className="w-4 h-4 rounded accent-orange-500"
+                  />
+                </label>
+              </div>
+            </div>
+
+            {/* ADMIN: Bulk Import Shift Data — paste JSON matching shiftsByDate shape,
+                import in one tap. Exists so a schedule can be bulk-loaded (e.g. from
+                an old Gsheet) without browser console access, which isn't available
+                on mobile. Safe to remove later if it's no longer needed. */}
+            <div className="bg-black/80 border border-cyan-500/40 rounded-2xl p-6 shadow-2xl">
+              <h2 className="text-lg font-extrabold text-slate-100 flex items-center gap-2 border-b border-slate-800 pb-4 mb-6">
+                <Upload className="w-5 h-5 text-cyan-400" /> Import Shift Data (Admin)
+              </h2>
+              <p className="text-xs text-slate-400 mb-3">
+                Paste JSON shaped like <code className="text-cyan-400">{'{ "2026-09-18": [24 shift objects], ... }'}</code> below.
+                Overwrites matching dates/hours in the shared schedule — does not merge with existing entries on those same slots.
+              </p>
+              <textarea
+                value={importText}
+                onChange={(e) => setImportText(e.target.value)}
+                placeholder='{"2026-09-18": [ {"hour":0,"primaryWatcher":null,...}, ... ], ...}'
+                rows={6}
+                className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-500 mb-3"
+              />
+              <button
+                onClick={handleImportShiftData}
+                disabled={!importText.trim()}
+                className="px-4 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 disabled:opacity-40 disabled:cursor-not-allowed text-sm font-extrabold text-white transition"
+              >
+                Import Shift Data
+              </button>
+              {importStatus && (
+                <p className={`text-xs font-bold mt-3 ${importStatus.type === 'err' ? 'text-red-400' : importStatus.type === 'ok' ? 'text-emerald-400' : 'text-slate-400'}`}>
+                  {importStatus.message}
+                </p>
+              )}
+            </div>
+
+            {/* Event Minimum Target & Pay Rates */}
+            <div className="bg-black/80 border border-slate-800 rounded-2xl p-6 shadow-2xl">
+              <h2 className="text-lg font-extrabold text-slate-100 border-b border-slate-800 pb-4 mb-6">
+                Faction Goal, Event Minimum Target & Watcher Pay Rates
+              </h2>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-6 pb-6 border-b border-slate-800/80">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-orange-400 mb-1.5 flex items-center gap-1.5">
+                    <Target className="w-3.5 h-3.5" /> Faction Hit Goal (Whole Event)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.chainGoal}
+                    onChange={(e) => updateSettings({ chainGoal: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-orange-500/40 rounded-xl px-4 py-2.5 text-sm font-mono text-orange-300"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Combined hits required across the whole faction for the entire event — shown on the Event Minimum tab.</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-cyan-400 mb-1.5">
+                    Event Minimum Hits Target
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.eventMinHits}
+                    onChange={(e) => updateSettings({ eventMinHits: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-cyan-400"
+                  />
+                  <p className="text-[10px] text-slate-500 mt-1">Simple hit count target for each member</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-emerald-400 mb-1.5">
+                    Primary Watcher Pay ($ / hr)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.primaryRate}
+                    onChange={(e) => updateSettings({ primaryRate: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-emerald-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-extrabold uppercase text-cyan-400 mb-1.5">
+                    Secondary Watcher Pay ($ / hr)
+                  </label>
+                  <input
+                    type="number"
+                    value={settings.secondaryRate}
+                    onChange={(e) => updateSettings({ secondaryRate: Number(e.target.value) })}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm font-mono text-cyan-400"
+                  />
+                </div>
+              </div>
+
+            </div>
+
+            {/* DANGER ZONE: Reset Chain */}
+            <div className="bg-black/80 border border-rose-500/50 rounded-2xl p-6 shadow-2xl">
+              <h2 className="text-lg font-extrabold text-rose-300 flex items-center gap-2 border-b border-rose-900/60 pb-4 mb-4">
+                <AlertTriangle className="w-5 h-5 text-rose-400" /> Reset Chain (Danger Zone)
+              </h2>
+              <p className="text-xs text-slate-400 mb-4 leading-relaxed">
+                Wipes every shift day (current and archived), all shift notes, the synced Torn chain hits/respect,
+                and the roster name cache — then rebuilds a fresh empty schedule starting today. Chain status resets
+                to "Scheduled" and the start date resets to today. Use this once a chain is fully wrapped up and
+                reported on, to get the app ready for the next one. This cannot be undone.
+              </p>
+              <button
+                onClick={handleResetChain}
+                className="px-4 py-2.5 rounded-xl bg-rose-700 hover:bg-rose-600 text-sm font-extrabold text-white transition"
+              >
+                Reset Chain
+              </button>
+              {resetStatus && (
+                <p className={`text-xs font-bold mt-3 ${resetStatus.type === 'err' ? 'text-red-400' : 'text-emerald-400'}`}>
+                  {resetStatus.message}
+                </p>
+              )}
+            </div>
+
+          </div>
+        )}
+
+      </main>
+    </div>
+  );
+}
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(<App />);
+</script>
+</body>
+</html>
